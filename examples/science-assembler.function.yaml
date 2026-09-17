@@ -4,7 +4,7 @@
 kind: function
 name: science_assembler
 params: {}
-size: { width: 7, height: 6 }
+size: { width: 9, height: 6 }
 entities:
   - name: transport-belt
     position: { x: 3, y: 0 }
@@ -28,7 +28,22 @@ entities:
   - name: transport-belt
     position: { x: 6, y: 3 }
     direction: south
-  # Two poles, not one: this function is 7x6, and a single pole's
+  # Void sink: an inserter moves packs off the output belt into an
+  # infinity-chest filtered "at-most 0" — anything inserted beyond that is
+  # deleted. Without this, the output belt (and then the assembler itself)
+  # backs up to full_output within ~30 seconds with nothing downstream,
+  # which silently stops production entirely rather than erroring — a real
+  # trap for a throughput test specifically, confirmed live (the measured
+  # rate collapsed from 60/min to 8/min once it happened).
+  - name: inserter
+    position: { x: 7, y: 3 }
+    direction: west
+  - name: infinity-chest
+    position: { x: 8, y: 3 }
+    infinityFilter: { name: automation-science-pack, count: 0, mode: at-most }
+  - name: medium-electric-pole
+    position: { x: 8, y: 5 }
+  # Three poles, not one: this function is now 9x6, and a single pole's
   # supply_radius (3.5) can't reach both the north inserter and the east
   # (output) inserter from any one corner — confirmed live as two of three
   # inserters reporting no_power while the third (closer to the one pole)

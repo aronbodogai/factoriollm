@@ -70,6 +70,7 @@ export function resolveFunction(
         position: centerPosition({ x, y }, name),
         direction: DIRECTION_TO_NUM[template.direction],
         recipe,
+        infinityFilter: template.infinityFilter,
       });
     }
   });

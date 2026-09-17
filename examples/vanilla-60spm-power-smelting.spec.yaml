@@ -167,15 +167,20 @@ instances:
     position: { x: 20, y: 57 }
   # Second relay column bridging the furnace zone's own poles (x=28) toward
   # the assembly zone further east (x=45-53), applied in the other half.
+  # y:3/15/27, not 0/15/30 — furnace poles sit at absolute y=3,9,15,21,27,33
+  # (furnace_row's own pole, local y offset 3). relay10 at y=15 happens to
+  # align exactly (distance 9.0, right at wire_reach) and connects; relay9/11
+  # at the un-aligned y=0/30 measured 9.49 to the nearest furnace pole —
+  # just over the limit — and came up as isolated single-pole networks live.
   - id: relay9
     function: single_pole
-    position: { x: 37, y: 0 }
+    position: { x: 37, y: 3 }
   - id: relay10
     function: single_pole
     position: { x: 37, y: 15 }
   - id: relay11
     function: single_pole
-    position: { x: 37, y: 30 }
+    position: { x: 37, y: 27 }
   # Third relay column: relay9/10/11 at x=37 are 13 tiles from the assembly
   # stage's own poles at x=50 (that stage's science_assembler pole sits at
   # local x=0 — miscalculated this as "close enough" the first time), which

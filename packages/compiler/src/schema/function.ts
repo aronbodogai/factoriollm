@@ -16,12 +16,23 @@ export const portSchema = z.object({
   signal: z.string().optional(),
 });
 
+export const infinityFilterSchema = z.object({
+  name: z.string(),
+  count: z.number(),
+  mode: z.enum(["at-least", "at-most", "exactly"]),
+});
+
 export const entityTemplateSchema = z.object({
   name: z.string(), // literal, or "${param}"
   position: z.object({ x: numberOrExprSchema, y: numberOrExprSchema }),
   direction: directionSchema.default("north"),
   recipe: z.string().optional(), // literal, or "${param}"
   repeat: numberOrExprSchema.optional(),
+  // For an infinity-chest/infinity-pipe entity authored directly in a
+  // function (e.g. a test "void" sink: mode "at-most", count 0 deletes
+  // anything inserted beyond that) — the resource-instance mechanism
+  // (drillPlacer.ts) synthesizes its own chest separately and doesn't use this.
+  infinityFilter: infinityFilterSchema.optional(),
 });
 
 export const functionSchema = z.object({

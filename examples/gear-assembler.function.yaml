@@ -5,7 +5,7 @@
 kind: function
 name: gear_assembler
 params: {}
-size: { width: 7, height: 3 }
+size: { width: 9, height: 3 }
 entities:
   - name: transport-belt
     position: { x: 0, y: 1 }
@@ -23,11 +23,22 @@ entities:
   - name: transport-belt
     position: { x: 6, y: 1 }
     direction: south
+  # Void sink — see science-assembler.function.yaml for why this is needed
+  # (no downstream consumer otherwise backs up to full_output and silently
+  # stops production).
+  - name: inserter
+    position: { x: 7, y: 1 }
+    direction: west
+  - name: infinity-chest
+    position: { x: 8, y: 1 }
+    infinityFilter: { name: iron-gear-wheel, count: 0, mode: at-most }
   # Not local (0,0) — the same tile an in-port connector's corner would land
   # on whenever the source chest shares this instance's y; see
   # science-assembler.function.yaml for the confirmed collision.
   - name: medium-electric-pole
     position: { x: 0, y: 2 }
+  - name: medium-electric-pole
+    position: { x: 8, y: 2 }
 ports:
   in:
     side: north
