@@ -1,0 +1,23 @@
+# Part 2a of the assembly stage (gear_demo only) — see
+# vanilla-60spm-power-smelting.spec.yaml for the split rationale. Even a
+# 57-entity batch (gear_demo + science1 + science2) hit a second, different
+# limit beyond the 50,000-char check: the RCON reply came back empty even
+# though ~52 of 57 entities were actually created (confirmed live) —
+# apply() doing too much work in one Lua invocation, not command length.
+# Split to one assembler group per apply call as the reliable unit size.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - gear-assembler.function.yaml
+instances:
+  - id: gear_plate_ore
+    resource: iron-plate
+    resource_mode: infinity_chest
+    position: { x: 42, y: -12 }
+  - id: gear_demo
+    function: gear_assembler
+    position: { x: 45, y: -12 }
+connections:
+  - { from: gear_plate_ore.out, to: gear_demo.in, kind: belt }

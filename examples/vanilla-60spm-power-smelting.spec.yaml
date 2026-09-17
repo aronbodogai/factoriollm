@@ -1,14 +1,16 @@
-# Fresh vanilla no-biters test map, building toward 60 automation-science-pack/min.
-# Built incrementally: power first, then smelting, then assembly. Uses this
-# server's daytime frozen at noon (surf.freeze_daytime=true, surf.daytime=0.5 —
-# a test-setup step, not part of the format) so solar output is constant and
-# no accumulators are needed.
+# Part 1 of 2 (see vanilla-60spm-assembly.spec.yaml for the rest) — split
+# because one spec covering the whole factory compiles to a plan JSON over
+# the 50,000-char single-RCON-command safety limit (326 entities ~= 54,000
+# chars; chunked delivery isn't implemented yet, see
+# packages/cli/src/deploy/trigger.ts). Each half applies independently with
+# its own state file.
 #
-# Power budget (all confirmed live via prototypes.entity, not assumed):
-#   6 electric-furnace (180kW ea) + 12 furnace inserters (14.7kW ea)
-#   + 2 gear assembling-machine-1 (75kW ea) + 4 gear inserters
-#   + 10 science assembling-machine-1 (75kW ea) + 30 science inserters
-#   ~= 2.66MW peak. 60 solar panels (60kW ea) = 3.6MW, ~35% margin.
+# Fresh vanilla no-biters test map, building toward 60 automation-science-pack/min.
+# Uses this server's daytime convention where 0 is full daylight
+# (surf.daytime=0, surf.freeze_daytime=true — a test-setup step, not part of
+# the format; 0.5, initially assumed to be "noon", turned out to be when
+# panels report no_power) so solar output is constant and no accumulators
+# are needed.
 kind: spec
 server:
   rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
@@ -119,6 +121,22 @@ instances:
     function: solar_row
     position: { x: 0, y: 44 }
     params: { count: 5 }
+  - id: solar13
+    function: solar_row
+    position: { x: 0, y: 48 }
+    params: { count: 5 }
+  - id: solar14
+    function: solar_row
+    position: { x: 0, y: 52 }
+    params: { count: 5 }
+  - id: solar15
+    function: solar_row
+    position: { x: 0, y: 56 }
+    params: { count: 5 }
+  - id: solar16
+    function: solar_row
+    position: { x: 0, y: 60 }
+    params: { count: 5 }
   # Relay spine: solar rows' own poles sit at absolute x=13.5 (local x=2/8/13
   # + row offset 0). Wire_reach is 9, so relays at x=20 (6.5 from the spine)
   # and spaced 8 apart vertically link the whole solar farm into one network
@@ -141,6 +159,37 @@ instances:
   - id: relay6
     function: single_pole
     position: { x: 20, y: 41 }
+  - id: relay7
+    function: single_pole
+    position: { x: 20, y: 49 }
+  - id: relay8
+    function: single_pole
+    position: { x: 20, y: 57 }
+  # Second relay column bridging the furnace zone's own poles (x=28) toward
+  # the assembly zone further east (x=45-53), applied in the other half.
+  - id: relay9
+    function: single_pole
+    position: { x: 37, y: 0 }
+  - id: relay10
+    function: single_pole
+    position: { x: 37, y: 15 }
+  - id: relay11
+    function: single_pole
+    position: { x: 37, y: 30 }
+  # Third relay column: relay9/10/11 at x=37 are 13 tiles from the assembly
+  # stage's own poles at x=50 (that stage's science_assembler pole sits at
+  # local x=0 — miscalculated this as "close enough" the first time), which
+  # exceeds wire_reach (9) — confirmed live as an isolated single-pole
+  # network. x=43 sits within reach of both.
+  - id: relay12
+    function: single_pole
+    position: { x: 43, y: 0 }
+  - id: relay13
+    function: single_pole
+    position: { x: 43, y: 15 }
+  - id: relay14
+    function: single_pole
+    position: { x: 43, y: 30 }
 connections:
   - { from: iron_ore_1.out, to: iron_furnace_1.in, kind: belt }
   - { from: iron_ore_2.out, to: iron_furnace_2.in, kind: belt }

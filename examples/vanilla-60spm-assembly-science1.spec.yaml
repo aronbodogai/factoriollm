@@ -1,0 +1,24 @@
+# One science_assembler group — see vanilla-60spm-assembly.spec.yaml for
+# why these are split one-per-file (apply() doing too much work in a single
+# RCON round trip was silently dropping the reply past ~50 entities).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - science-assembler.function.yaml
+instances:
+  - id: science1_copper
+    resource: copper-plate
+    resource_mode: infinity_chest
+    position: { x: 47, y: 0 }
+  - id: science1_gear
+    resource: iron-gear-wheel
+    resource_mode: infinity_chest
+    position: { x: 50, y: -4 }
+  - id: science1
+    function: science_assembler
+    position: { x: 50, y: 0 }
+connections:
+  - { from: science1_copper.out, to: science1.in_copper, kind: belt }
+  - { from: science1_gear.out, to: science1.in_gear, kind: belt }

@@ -1,0 +1,43 @@
+# One assembling-machine-3 crafting iron-gear-wheel, fed by a dedicated
+# iron-plate input and unloading onto an output belt. Unlike a furnace,
+# assembling machines DO support set_recipe (verified: it's furnaces that
+# don't — "Entity is not assembling-machine").
+kind: function
+name: gear_assembler
+params: {}
+size: { width: 7, height: 3 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 1 }
+    direction: south
+  - name: inserter
+    position: { x: 1, y: 1 }
+    direction: west
+  - name: assembling-machine-3
+    position: { x: 2, y: 0 }
+    direction: north
+    recipe: iron-gear-wheel
+  - name: inserter
+    position: { x: 5, y: 1 }
+    direction: west
+  - name: transport-belt
+    position: { x: 6, y: 1 }
+    direction: south
+  # Not local (0,0) — the same tile an in-port connector's corner would land
+  # on whenever the source chest shares this instance's y; see
+  # science-assembler.function.yaml for the confirmed collision.
+  - name: medium-electric-pole
+    position: { x: 0, y: 2 }
+ports:
+  in:
+    side: north
+    offset: { x: 0, y: 1 }
+    direction: south
+    kind: belt
+    item: iron-plate
+  out:
+    side: south
+    offset: { x: 6, y: 1 }
+    direction: south
+    kind: belt
+    item: iron-gear-wheel

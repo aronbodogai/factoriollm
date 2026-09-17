@@ -1,0 +1,21 @@
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - science-assembler.function.yaml
+instances:
+  - id: science4_copper
+    resource: copper-plate
+    resource_mode: infinity_chest
+    position: { x: 47, y: 36 }
+  - id: science4_gear
+    resource: iron-gear-wheel
+    resource_mode: infinity_chest
+    position: { x: 50, y: 32 }
+  - id: science4
+    function: science_assembler
+    position: { x: 50, y: 36 }
+connections:
+  - { from: science4_copper.out, to: science4.in_copper, kind: belt }
+  - { from: science4_gear.out, to: science4.in_gear, kind: belt }
