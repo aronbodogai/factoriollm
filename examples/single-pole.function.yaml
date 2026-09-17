@@ -1,0 +1,11 @@
+# One medium-electric-pole, for relaying the grid between distant functions.
+# No ports — power connects wirelessly (supply_radius/wire_reach), not
+# through connect.ts.
+kind: function
+name: single_pole
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: medium-electric-pole
+    position: { x: 0, y: 0 }
+ports: {}

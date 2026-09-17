@@ -53,25 +53,62 @@ export function synthesizeResourceInstance(instance: ResourceInstance): Synthesi
     mode: "at-least",
   };
 
-  const entity: IREntity = {
-    localId: instance.id,
+  // A chest — even an infinity-chest — never ejects onto an adjacent belt by
+  // itself; verified live that an inserter is required to move items from
+  // any chest onto a belt. So the "out" port isn't the chest's own tile —
+  // it's a belt tile at local (2,0), fed by an inserter that picks up from
+  // the chest (west) and drops onto that belt (east).
+  const chest: IREntity = {
+    localId: `${instance.id}.chest`,
     name: "infinity-chest",
     position: centerPosition({ x: 0, y: 0 }, "infinity-chest"),
     infinityFilter: filter,
   };
+  // A plain inserter (~0.83-1.2 items/sec) comfortably covers one
+  // furnace's demand (0.625/sec for an electric-furnace) — this is meant for
+  // a 1:1 chest-to-consumer feed. A single inserter feeding a SHARED belt
+  // with multiple downstream consumers is a different problem entirely:
+  // verified live that whichever consumer sits first on the belt drains
+  // 100% of supply forever (it grabs every item before belt motion can
+  // carry any past it, up to the destination's own buffer cap), regardless
+  // of how much oversupply exists upstream or how large the feeder
+  // inserter's stack bonus is. That's a real Factorio production-line
+  // balancing problem, not something to solve here — spec authors needing
+  // several consumers should instantiate this resource multiple times (see
+  // docs/FORMAT.md) rather than fan one instance's output into many.
+  const outputInserter: IREntity = {
+    localId: `${instance.id}.inserter`,
+    name: "inserter",
+    position: centerPosition({ x: 1, y: 0 }, "inserter"),
+    direction: DIRECTION_TO_NUM.west,
+  };
+  const outputBelt: IREntity = {
+    localId: `${instance.id}.belt`,
+    name: "transport-belt",
+    position: centerPosition({ x: 2, y: 0 }, "transport-belt"),
+    direction: DIRECTION_TO_NUM.east,
+  };
+  // The inserter needs its own power regardless of where this instance ends
+  // up relative to whatever grid is nearby — verified live that a resource
+  // instance placed between two well-connected poles can still land just
+  // outside both of their 3.5-tile supply radii. This pole only needs to be
+  // within wire_reach (9) of *something* on the grid, which is a much looser
+  // requirement to satisfy by placement alone.
+  const pole: IREntity = {
+    localId: `${instance.id}.pole`,
+    name: "medium-electric-pole",
+    position: centerPosition({ x: 0, y: -1 }, "medium-electric-pole"),
+  };
 
-  // Single "out" port immediately east of the chest's own tile — an
-  // intentionally simple default; resource instances don't have a
-  // user-authored port layout the way functions do.
   const port: ResolvedPort = {
     side: "east",
-    offset: { x: 1, y: 0 },
+    offset: { x: 2, y: 0 },
     direction: DIRECTION_TO_NUM.east,
     kind: "belt",
     item: instance.resource,
   };
 
-  return { entities: [entity], ports: { out: port }, anchor: instance.position };
+  return { entities: [chest, outputInserter, outputBelt, pole], ports: { out: port }, anchor: instance.position };
 }
 
 /**

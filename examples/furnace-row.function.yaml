@@ -1,0 +1,56 @@
+# A row of `count` electric-furnaces (chosen over stone-furnace to avoid
+# coal-fuel logistics entirely — this project's whole power design is
+# electric-only), each fed by an inserter from a shared vertical input belt
+# and unloaded by an inserter onto a shared vertical output belt. Works for
+# any ore — furnaces auto-detect their recipe from input material.
+# Inserter direction is its PICKUP side (learned in Phase 4): "west" picks
+# up from the belt on its west and drops on its east. Rows are spaced 4
+# apart (furnace is 3 tall) to leave a 1-tile gap for a power pole — putting
+# it inside the furnace's own footprint (tried first) silently fails the
+# placement guard the same way the solar farm's pole mistake did.
+kind: function
+name: furnace_row
+params:
+  count: { type: int, default: 4 }
+size: { width: 7, height: "${count * 4}" }
+entities:
+  - repeat: "${count}"
+    name: transport-belt
+    position: { x: 0, y: "${i * 4 + 1}" }
+    direction: south
+  - repeat: "${count}"
+    name: inserter
+    position: { x: 1, y: "${i * 4 + 1}" }
+    direction: west
+  - repeat: "${count}"
+    name: electric-furnace
+    position: { x: 2, y: "${i * 4}" }
+    direction: north
+  - repeat: "${count}"
+    name: inserter
+    position: { x: 5, y: "${i * 4 + 1}" }
+    direction: west
+  - repeat: "${count}"
+    name: transport-belt
+    position: { x: 6, y: "${i * 4 + 1}" }
+    direction: south
+  - repeat: "${count}"
+    name: medium-electric-pole
+    position: { x: 3, y: "${i * 4 + 3}" }
+ports:
+  in:
+    side: north
+    # y:1, not 0 — the first row's actual belt tile is at y=1 (aligned to
+    # the furnace's 3-tall center row), not y=0. Getting this wrong left a
+    # 1-tile gap the connector never filled, confirmed live: ore piled up on
+    # the connector's last tile while the furnace's own belt stayed empty.
+    offset: { x: 0, y: 1 }
+    direction: south
+    kind: belt
+    item: iron-ore
+  out:
+    side: south
+    offset: { x: 6, y: "${count * 4 - 3}" }
+    direction: south
+    kind: belt
+    item: iron-plate

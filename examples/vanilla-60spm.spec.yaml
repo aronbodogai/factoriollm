@@ -3,13 +3,74 @@
 # server's daytime frozen at noon (surf.freeze_daytime=true, surf.daytime=0.5 —
 # a test-setup step, not part of the format) so solar output is constant and
 # no accumulators are needed.
+#
+# Power budget (all confirmed live via prototypes.entity, not assumed):
+#   6 electric-furnace (180kW ea) + 12 furnace inserters (14.7kW ea)
+#   + 2 gear assembling-machine-1 (75kW ea) + 4 gear inserters
+#   + 10 science assembling-machine-1 (75kW ea) + 30 science inserters
+#   ~= 2.66MW peak. 60 solar panels (60kW ea) = 3.6MW, ~35% margin.
 kind: spec
 server:
   rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
   script_output_dir: /home/ideku/fb/instance/script-output
 imports:
   - solar-row.function.yaml
+  - single-pole.function.yaml
+  - furnace-row.function.yaml
 instances:
+  # One dedicated chest per furnace, not one shared belt feeding several —
+  # verified live that a single inserter on a shared belt drains 100% of
+  # supply before it can reach a second consumer (see drillPlacer.ts). Each
+  # furnace_row here uses count:1, so this is really "4 separate iron
+  # smelters" and "2 separate copper smelters", each self-contained.
+  - id: iron_ore_1
+    resource: iron-ore
+    resource_mode: infinity_chest
+    position: { x: 22, y: -3 }
+  - id: iron_furnace_1
+    function: furnace_row
+    position: { x: 25, y: 0 }
+    params: { count: 1 }
+  - id: iron_ore_2
+    resource: iron-ore
+    resource_mode: infinity_chest
+    position: { x: 22, y: 3 }
+  - id: iron_furnace_2
+    function: furnace_row
+    position: { x: 25, y: 6 }
+    params: { count: 1 }
+  - id: iron_ore_3
+    resource: iron-ore
+    resource_mode: infinity_chest
+    position: { x: 22, y: 9 }
+  - id: iron_furnace_3
+    function: furnace_row
+    position: { x: 25, y: 12 }
+    params: { count: 1 }
+  - id: iron_ore_4
+    resource: iron-ore
+    resource_mode: infinity_chest
+    position: { x: 22, y: 15 }
+  - id: iron_furnace_4
+    function: furnace_row
+    position: { x: 25, y: 18 }
+    params: { count: 1 }
+  - id: copper_ore_1
+    resource: copper-ore
+    resource_mode: infinity_chest
+    position: { x: 22, y: 21 }
+  - id: copper_furnace_1
+    function: furnace_row
+    position: { x: 25, y: 24 }
+    params: { count: 1 }
+  - id: copper_ore_2
+    resource: copper-ore
+    resource_mode: infinity_chest
+    position: { x: 22, y: 27 }
+  - id: copper_furnace_2
+    function: furnace_row
+    position: { x: 25, y: 30 }
+    params: { count: 1 }
   - id: solar1
     function: solar_row
     position: { x: 0, y: 0 }
@@ -30,3 +91,60 @@ instances:
     function: solar_row
     position: { x: 0, y: 16 }
     params: { count: 5 }
+  - id: solar6
+    function: solar_row
+    position: { x: 0, y: 20 }
+    params: { count: 5 }
+  - id: solar7
+    function: solar_row
+    position: { x: 0, y: 24 }
+    params: { count: 5 }
+  - id: solar8
+    function: solar_row
+    position: { x: 0, y: 28 }
+    params: { count: 5 }
+  - id: solar9
+    function: solar_row
+    position: { x: 0, y: 32 }
+    params: { count: 5 }
+  - id: solar10
+    function: solar_row
+    position: { x: 0, y: 36 }
+    params: { count: 5 }
+  - id: solar11
+    function: solar_row
+    position: { x: 0, y: 40 }
+    params: { count: 5 }
+  - id: solar12
+    function: solar_row
+    position: { x: 0, y: 44 }
+    params: { count: 5 }
+  # Relay spine: solar rows' own poles sit at absolute x=13.5 (local x=2/8/13
+  # + row offset 0). Wire_reach is 9, so relays at x=20 (6.5 from the spine)
+  # and spaced 8 apart vertically link the whole solar farm into one network
+  # reaching east toward the smelting/assembly area.
+  - id: relay1
+    function: single_pole
+    position: { x: 20, y: 1 }
+  - id: relay2
+    function: single_pole
+    position: { x: 20, y: 9 }
+  - id: relay3
+    function: single_pole
+    position: { x: 20, y: 17 }
+  - id: relay4
+    function: single_pole
+    position: { x: 20, y: 25 }
+  - id: relay5
+    function: single_pole
+    position: { x: 20, y: 33 }
+  - id: relay6
+    function: single_pole
+    position: { x: 20, y: 41 }
+connections:
+  - { from: iron_ore_1.out, to: iron_furnace_1.in, kind: belt }
+  - { from: iron_ore_2.out, to: iron_furnace_2.in, kind: belt }
+  - { from: iron_ore_3.out, to: iron_furnace_3.in, kind: belt }
+  - { from: iron_ore_4.out, to: iron_furnace_4.in, kind: belt }
+  - { from: copper_ore_1.out, to: copper_furnace_1.in, kind: belt }
+  - { from: copper_ore_2.out, to: copper_furnace_2.in, kind: belt }
