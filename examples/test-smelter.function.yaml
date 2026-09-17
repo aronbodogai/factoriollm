@@ -1,0 +1,23 @@
+# Phase 4 fixture: not part of the format's port/connection system (inserters
+# aren't a port kind) — this is a small ad hoc rig to produce a real,
+# measurable "iron-plate produced" stat for testing `apply --smoke-check`
+# against factorio-broadcast's /api/stats. A burner-inserter (needs fuel,
+# topped up once via RCON for the test) pulls ore from whatever's on its west
+# tile and feeds a furnace on its east tile.
+kind: function
+name: test_smelter
+params: {}
+size: { width: 3, height: 2 }
+entities:
+  - name: burner-inserter
+    position: { x: 0, y: 0 }
+    # Verified live: an inserter's `direction` is its PICKUP side, drop is
+    # the opposite tile — backwards from the naive "direction = drop side"
+    # assumption. "west" here picks up from the chest (west) and drops onto
+    # the furnace (east).
+    direction: west
+  - name: stone-furnace
+    position: { x: 1, y: 0 }
+    direction: north
+    recipe: iron-plate
+ports: {}

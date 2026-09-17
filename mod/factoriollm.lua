@@ -36,6 +36,17 @@ end
 -- localId is a factoriollm concept, not a Factorio one, so update/destroy re-find their
 -- entity by exact name+position rather than by any id Factorio itself tracks.
 
+-- Furnaces (type "furnace") pick their recipe automatically from whatever
+-- raw material lands in their input, unlike assembling machines — calling
+-- set_recipe on one errors ("Entity is not assembling-machine"). So
+-- `recipe` in the format only takes effect for assembling-machine entities;
+-- it's silently a no-op on a furnace, which needs nothing else from it.
+local function apply_recipe(entity, recipe)
+  if recipe and entity.type == "assembling-machine" then
+    entity.set_recipe(recipe)
+  end
+end
+
 local function do_create(surface, entity_spec)
   local created = surface.create_entity({
     name = entity_spec.name,
@@ -50,9 +61,7 @@ local function do_create(surface, entity_spec)
     ))
   end
   apply_infinity_filter(created, entity_spec.infinityFilter)
-  if entity_spec.recipe then
-    created.set_recipe(entity_spec.recipe)
-  end
+  apply_recipe(created, entity_spec.recipe)
 end
 
 local function do_update(surface, entity_spec)
@@ -64,9 +73,7 @@ local function do_update(surface, entity_spec)
     ))
   end
   apply_infinity_filter(existing, entity_spec.infinityFilter)
-  if entity_spec.recipe then
-    existing.set_recipe(entity_spec.recipe)
-  end
+  apply_recipe(existing, entity_spec.recipe)
 end
 
 local function do_destroy(surface, entity_spec)

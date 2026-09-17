@@ -1,4 +1,4 @@
-const BOOLEAN_FLAGS = new Set(["auto-approve"]);
+const BOOLEAN_FLAGS = new Set(["auto-approve", "smoke-check"]);
 
 export interface ParsedArgs {
   positionals: string[];

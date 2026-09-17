@@ -6,20 +6,28 @@ write a spec, `plan` shows the diff, `apply` pushes it, state is tracked so
 re-applying is idempotent and `destroy` tears it down. No player, no
 inventory, no character — entities are created directly via the Lua API.
 
-Status: **Phase 3** — resource scanning (`scan_resources`, server-side
-flood-fill of `find_entities_filtered{type="resource"}` into patch
-summaries) and greedy `real_drills` mining-drill placement, on top of
-everything Phase 1/2 built (functions, ports, connect.ts). Verified live
-against a real ore patch on the shared dev save: `scan-resources` found a
-325-tile iron-ore patch, cross-checked exactly against a direct RCON count;
-`apply`'d 15 electric-mining-drills over its bounding box with zero
-collisions (14/15 landed on real ore — the 1 miss is the documented
-bbox-only-not-patch-shape-aware limitation, confirmed live via
-`entity.status == no_minable_resources`); switching the same instance's
-`resource_mode` to `infinity_chest` and re-planning cleanly diffed to
-destroy-15/create-1 with no other change needed. Wire connections
-(`docs/FORMAT.md`'s full format) and the `factorio-broadcast` smoke-check
-integration land in later phases.
+Status: **Phase 4 (all 5 planned phases complete)** — `apply --smoke-check`
+polls factorio-broadcast's `/api/stats` for a named item's production rate
+to confirm a deploy is actually doing something, not just that entities
+exist. On top of Phases 0-3: RCON round trip, resource-backed instances
+(`infinity_chest` stub and real `real_drills` greedy placement),
+parameterized reusable functions (`params`/`repeat`/ports), and the
+connect.ts port-router — all verified live against the shared dev server,
+not just type-checked. Wire connections and rotated instances (only
+`direction: north` works today) are the two things `docs/FORMAT.md`
+describes that aren't implemented yet.
+
+Real bugs this project's live-testing discipline caught that a type checker
+never would have (see commit history for the fix and the false assumption
+behind each): a nonexistent `helpers.read_file` the whole plan-delivery
+design first assumed existed; a blind RCON double-send that silently
+double-executed every side-effecting command; missing footprint-aware
+center-offset math causing duplicate-looking entities; unresolved
+`"${expr}"` templates in port offsets; `set_recipe` failing on furnaces
+(only assembling-machines support it — furnaces infer their recipe from
+input); an inserter's `direction` meaning pickup-side, not drop-side; and
+the stats API nesting production by time window, not flat, contradicting
+the README's own simplified example.
 
 ## Quick start (against the shared dev server)
 

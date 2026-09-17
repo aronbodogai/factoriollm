@@ -14,7 +14,7 @@ commands:
   ping                          round-trip an RCON call to the companion mod
   validate <spec.yaml>          parse + resolve, no server contact
   plan <spec.yaml> [--state f]  show the diff against state, no changes made
-  apply <spec.yaml> [--state f] [--auto-approve]
+  apply <spec.yaml> [--state f] [--auto-approve] [--smoke-check --smoke-item X [--smoke-sidecar url] [--smoke-surface X] [--smoke-timeout ms]]
   destroy <spec.yaml> [--state f] [--auto-approve]
   scan-resources <spec.yaml> --left N --top N --right N --bottom N [--resource X] [--surface X]
 
@@ -53,7 +53,7 @@ async function main(): Promise<void> {
     case "apply": {
       const specPath = requireSpecPath(positionals);
       const statePath = flags.get("state") ?? defaultStatePath(specPath);
-      await applyCommand(specPath, statePath, flags, booleanFlags.has("auto-approve"));
+      await applyCommand(specPath, statePath, flags, booleanFlags.has("auto-approve"), booleanFlags.has("smoke-check"));
       break;
     }
 

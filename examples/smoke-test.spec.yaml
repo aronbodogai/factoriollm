@@ -1,0 +1,17 @@
+# Phase 4 fixture for `apply --smoke-check`. No `connections:` — the chest
+# and the inserter are just placed touching each other directly (inserters
+# aren't a belt/pipe/wire port kind), not routed through connect.ts.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - test-smelter.function.yaml
+instances:
+  - id: ore_source
+    resource: iron-ore
+    resource_mode: infinity_chest
+    position: { x: 100, y: 100 }
+  - id: smelter
+    function: test_smelter
+    position: { x: 101, y: 100 }
