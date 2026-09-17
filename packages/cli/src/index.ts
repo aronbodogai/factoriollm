@@ -4,6 +4,7 @@ import { validate } from "./commands/validate.js";
 import { planCommand, defaultStatePath } from "./commands/plan.js";
 import { applyCommand } from "./commands/apply.js";
 import { destroyCommand } from "./commands/destroy.js";
+import { scanResourcesCommand } from "./commands/scanResources.js";
 import { parseArgs } from "./args.js";
 import { resolveServerOptions } from "./server.js";
 
@@ -15,6 +16,7 @@ commands:
   plan <spec.yaml> [--state f]  show the diff against state, no changes made
   apply <spec.yaml> [--state f] [--auto-approve]
   destroy <spec.yaml> [--state f] [--auto-approve]
+  scan-resources <spec.yaml> --left N --top N --right N --bottom N [--resource X] [--surface X]
 
 RCON settings default to spec.server.rcon (ping falls back to
 FACTORIOLLM_RCON_HOST / _PORT / _PASSWORD); --host/--port/--password override
@@ -59,6 +61,12 @@ async function main(): Promise<void> {
       const specPath = requireSpecPath(positionals);
       const statePath = flags.get("state") ?? defaultStatePath(specPath);
       await destroyCommand(specPath, statePath, flags, booleanFlags.has("auto-approve"));
+      break;
+    }
+
+    case "scan-resources": {
+      const specPath = requireSpecPath(positionals);
+      await scanResourcesCommand(specPath, flags);
       break;
     }
 

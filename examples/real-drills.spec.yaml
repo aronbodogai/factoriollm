@@ -1,0 +1,15 @@
+# Phase 3 fixture: a real, live-scanned iron-ore patch (via
+# `factoriollm scan-resources`), greedily covered with electric-mining-drills.
+# bounding_box came straight from that scan's output, cross-checked against
+# a direct RCON find_entities_filtered count (325 tiles, 718477 amount —
+# exact match) before being pasted in here.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+instances:
+  - id: patch1
+    resource: iron-ore
+    resource_mode: real_drills
+    position: { x: 32, y: 475 }
+    bounding_box: { left: 32, top: 475, right: 48, bottom: 506 }

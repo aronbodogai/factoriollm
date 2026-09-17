@@ -29,6 +29,7 @@ export function buildLayoutInstances(spec: Spec, functions: Map<string, Function
 
     let localEntities: IREntity[];
     let localPorts: Record<string, ResolvedPort>;
+    let anchor: Position;
 
     if (isFunctionInstance(instance)) {
       if (instance.direction !== "north") {
@@ -41,16 +42,18 @@ export function buildLayoutInstances(spec: Spec, functions: Map<string, Function
       const resolved = resolveFunction(def, instance.id, instance.params);
       localEntities = resolved.entities;
       localPorts = resolved.ports;
+      anchor = instance.position;
     } else {
       const resolved = synthesizeResourceInstance(instance);
       localEntities = resolved.entities;
       localPorts = resolved.ports;
+      anchor = resolved.anchor; // instance.position for infinity_chest, bounding_box top-left for real_drills
     }
 
-    const entities = localEntities.map((entity) => ({ ...entity, position: translate(entity.position, instance.position) }));
+    const entities = localEntities.map((entity) => ({ ...entity, position: translate(entity.position, anchor) }));
     const ports: Record<string, ResolvedPort> = {};
     for (const [name, port] of Object.entries(localPorts)) {
-      ports[name] = { ...port, offset: translate(port.offset, instance.position) };
+      ports[name] = { ...port, offset: translate(port.offset, anchor) };
     }
 
     layouts.push({ id: instance.id, entities, ports });

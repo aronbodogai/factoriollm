@@ -13,12 +13,23 @@ export const serverSchema = z.object({
   surface: z.string().default("nauvis"),
 });
 
+export const boundingBoxSchema = z.object({
+  left: z.number(),
+  top: z.number(),
+  right: z.number(),
+  bottom: z.number(),
+});
+
 export const resourceInstanceSchema = z.object({
   id: z.string(),
   resource: z.string(),
   resource_mode: z.enum(["infinity_chest", "real_drills"]),
   position: positionSchema,
   patch_id: z.string().optional(),
+  // Required for resource_mode: real_drills — from `factoriollm scan-resources`.
+  // Keeping this a literal spec field (not fetched live during compile) is
+  // what lets validate/plan stay fully offline, same as everything else.
+  bounding_box: boundingBoxSchema.optional(),
 });
 
 export const functionInstanceSchema = z.object({
@@ -46,6 +57,7 @@ export const specSchema = z.object({
 });
 
 export type Spec = z.infer<typeof specSchema>;
+export type BoundingBox = z.infer<typeof boundingBoxSchema>;
 export type ResourceInstance = z.infer<typeof resourceInstanceSchema>;
 export type FunctionInstance = z.infer<typeof functionInstanceSchema>;
 export type Instance = z.infer<typeof instanceSchema>;

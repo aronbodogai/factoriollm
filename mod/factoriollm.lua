@@ -83,6 +83,79 @@ local HANDLERS = {
   destroy = do_destroy,
 }
 
+-- Flood-fills resource entities (one per tile, no first-class "patch" object
+-- in the API) into clusters. Returns only small summaries — never per-tile
+-- data — to keep the RCON reply small; scan an area, not the whole surface,
+-- to keep the flood-fill itself bounded (it runs on the game thread).
+local function cluster_resources(surface, area, resource_name)
+  local filter = { type = "resource" }
+  if area then filter.area = area end
+  if resource_name then filter.name = resource_name end
+
+  local entities = surface.find_entities_filtered(filter)
+
+  local by_tile = {}
+  for _, e in ipairs(entities) do
+    local tx, ty = math.floor(e.position.x), math.floor(e.position.y)
+    by_tile[tx] = by_tile[tx] or {}
+    by_tile[tx][ty] = { name = e.name, amount = e.amount }
+  end
+
+  local NEIGHBORS = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
+  local visited = {}
+  local patches = {}
+  local patch_index = 0
+
+  for _, e in ipairs(entities) do
+    local start_x, start_y = math.floor(e.position.x), math.floor(e.position.y)
+    local start_key = start_x .. ":" .. start_y
+    if not visited[start_key] then
+      visited[start_key] = true
+      local cluster_name = e.name
+      local min_x, max_x, min_y, max_y = start_x, start_x, start_y, start_y
+      local tile_count, total_amount = 0, 0
+      local stack = { { start_x, start_y } }
+
+      while #stack > 0 do
+        local cur = table.remove(stack)
+        local cx, cy = cur[1], cur[2]
+        local cell = by_tile[cx] and by_tile[cx][cy]
+        if cell and cell.name == cluster_name then
+          tile_count = tile_count + 1
+          total_amount = total_amount + cell.amount
+          if cx < min_x then min_x = cx end
+          if cx > max_x then max_x = cx end
+          if cy < min_y then min_y = cy end
+          if cy > max_y then max_y = cy end
+
+          for _, d in ipairs(NEIGHBORS) do
+            local nx, ny = cx + d[1], cy + d[2]
+            local nkey = nx .. ":" .. ny
+            if not visited[nkey] then
+              local ncell = by_tile[nx] and by_tile[nx][ny]
+              if ncell and ncell.name == cluster_name then
+                visited[nkey] = true
+                table.insert(stack, { nx, ny })
+              end
+            end
+          end
+        end
+      end
+
+      patch_index = patch_index + 1
+      table.insert(patches, {
+        patchId = "patch-" .. patch_index,
+        resourceName = cluster_name,
+        boundingBox = { left = min_x, top = min_y, right = max_x, bottom = max_y },
+        tileCount = tile_count,
+        totalAmount = total_amount,
+      })
+    end
+  end
+
+  return patches
+end
+
 function M.setup(_config)
   storage.factoriollm = storage.factoriollm or {}
 
@@ -126,6 +199,18 @@ function M.setup(_config)
         table.insert(results, result)
       end
       return results
+    end,
+
+    -- opts: {surface?, area?: {{left,top},{right,bottom}}, resource?}. area
+    -- is required in practice (see cluster_resources) — the CLI always
+    -- passes one from `factoriollm scan-resources`' --left/--top/--right/--bottom.
+    scan_resources = function(opts)
+      opts = opts or {}
+      local ok, surface = pcall(get_surface, opts.surface)
+      if not ok then
+        return { error = tostring(surface) }
+      end
+      return cluster_resources(surface, opts.area, opts.resource)
     end,
   })
 end
