@@ -6,16 +6,24 @@ write a spec, `plan` shows the diff, `apply` pushes it, state is tracked so
 re-applying is idempotent and `destroy` tears it down. No player, no
 inventory, no character — entities are created directly via the Lua API.
 
-Status: **Phase 4 (all 5 planned phases complete)** — `apply --smoke-check`
-polls factorio-broadcast's `/api/stats` for a named item's production rate
-to confirm a deploy is actually doing something, not just that entities
-exist. On top of Phases 0-3: RCON round trip, resource-backed instances
-(`infinity_chest` stub and real `real_drills` greedy placement),
-parameterized reusable functions (`params`/`repeat`/ports), and the
-connect.ts port-router — all verified live against the shared dev server,
-not just type-checked. Wire connections and rotated instances (only
-`direction: north` works today) are the two things `docs/FORMAT.md`
-describes that aren't implemented yet.
+Status: **60 automation-science-pack/min, self-sustained, on a fresh
+vanilla no-biters map** — `examples/vanilla-60spm-*.spec.yaml`. 80 solar
+panels power 6 real ore→plate electric-furnace smelters and, separately, 1
+gear + 4 science assembling-machine-3 (fed by dedicated infinity-chest
+stubs — a real Factorio production-bus problem, not a factoriollm one, kept
+the two halves from being wired end to end; see the spec files' own
+comments). Confirmed via the tool's own `apply --smoke-check`:
+`automation-science-pack producing at 60/min` — exact, not just nonzero,
+sustained with zero manual intervention once an infinity-chest "void" sink
+(`mode: at-most, count: 0`) was added to every assembler's output.
+
+On top of that: all 5 planned phases (0-4) — RCON round trip, resource-backed
+instances (`infinity_chest` stub and real `real_drills` greedy placement),
+parameterized reusable functions (`params`/`repeat`/ports), the connect.ts
+port-router, and `apply --smoke-check` itself — all verified live, not just
+type-checked. Wire connections and rotated instances (only `direction:
+north` works today) are the two things `docs/FORMAT.md` describes that
+aren't implemented yet.
 
 Real bugs this project's live-testing discipline caught that a type checker
 never would have (see commit history for the fix and the false assumption
