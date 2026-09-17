@@ -1,5 +1,5 @@
 import path from "node:path";
-import { parseSpec, buildIR, loadState, diff, buildPlan, type Spec, type Plan, type StateFile } from "@factoriollm/compiler";
+import { parseSpec, loadFunctions, buildIR, loadState, diff, buildPlan, type Spec, type Plan, type StateFile } from "@factoriollm/compiler";
 
 export function defaultStatePath(specPath: string): string {
   return path.join(path.dirname(path.resolve(specPath)), "factoriollm.state.json");
@@ -14,7 +14,8 @@ export interface Compiled {
 /** Shared by plan/apply: compile the spec and diff it against state. Throws CompileError on bad input. */
 export function compilePlan(specPath: string, statePath: string): Compiled {
   const spec = parseSpec(specPath);
-  const ir = buildIR(spec);
+  const functions = loadFunctions(spec, specPath);
+  const ir = buildIR(spec, functions);
   const state = loadState(statePath);
   const ops = diff(ir, state);
   const plan = buildPlan(ops);

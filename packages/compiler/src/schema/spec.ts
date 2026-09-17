@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-export const positionSchema = z.object({ x: z.number(), y: z.number() });
+import { positionSchema, directionSchema } from "./common.js";
 
 export const rconServerSchema = z.object({
   host: z.string().default("127.0.0.1"),
@@ -14,8 +13,6 @@ export const serverSchema = z.object({
   surface: z.string().default("nauvis"),
 });
 
-// Phase 1 only supports resource-backed instances (infinity-chest stub).
-// Function-backed instances (`function:`, `params:`) land in Phase 2.
 export const resourceInstanceSchema = z.object({
   id: z.string(),
   resource: z.string(),
@@ -24,11 +21,36 @@ export const resourceInstanceSchema = z.object({
   patch_id: z.string().optional(),
 });
 
+export const functionInstanceSchema = z.object({
+  id: z.string(),
+  function: z.string(),
+  position: positionSchema,
+  direction: directionSchema.default("north"),
+  params: z.record(z.union([z.number(), z.string()])).default({}),
+});
+
+export const instanceSchema = z.union([resourceInstanceSchema, functionInstanceSchema]);
+
+export const connectionSchema = z.object({
+  from: z.string(), // "instanceId.portName"
+  to: z.string(),
+  kind: z.enum(["belt", "pipe", "wire"]),
+});
+
 export const specSchema = z.object({
   kind: z.literal("spec"),
   server: serverSchema,
-  instances: z.array(resourceInstanceSchema).min(1),
+  imports: z.array(z.string()).default([]),
+  instances: z.array(instanceSchema).min(1),
+  connections: z.array(connectionSchema).default([]),
 });
 
 export type Spec = z.infer<typeof specSchema>;
 export type ResourceInstance = z.infer<typeof resourceInstanceSchema>;
+export type FunctionInstance = z.infer<typeof functionInstanceSchema>;
+export type Instance = z.infer<typeof instanceSchema>;
+export type Connection = z.infer<typeof connectionSchema>;
+
+export function isFunctionInstance(instance: Instance): instance is FunctionInstance {
+  return "function" in instance;
+}

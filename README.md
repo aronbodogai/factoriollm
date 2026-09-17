@@ -6,11 +6,15 @@ write a spec, `plan` shows the diff, `apply` pushes it, state is tracked so
 re-applying is idempotent and `destroy` tears it down. No player, no
 inventory, no character — entities are created directly via the Lua API.
 
-Status: **Phase 1** — resource-backed instances (`infinity_chest` stub) end
-to end: `validate` / `plan` / `apply` / `destroy`, state-file diffing,
-verified live against the shared dev server. Function-backed instances,
-port-to-port wiring, and real mining-drill placement (`docs/FORMAT.md`'s
-full format) land in later phases.
+Status: **Phase 2** — reusable parameterized functions (`params`, `repeat`,
+ports) and the port-to-port connect.ts router (straight + single-bend belt
+runs) work end to end, verified live: two `belt_segment` function instances
+10 tiles apart, wired by an auto-generated connector, form one continuous
+belt line — confirmed by actually moving an item across it, not just
+checking entity positions. A deliberately misaligned connection fails
+`validate` with `UNROUTABLE_CONNECTION` and never touches RCON. Wire
+connections and real mining-drill placement (`docs/FORMAT.md`'s full format)
+land in later phases.
 
 ## Quick start (against the shared dev server)
 

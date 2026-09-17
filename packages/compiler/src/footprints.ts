@@ -15,6 +15,12 @@ import type { Position } from "./ir.js";
 const FOOTPRINTS: Record<string, { width: number; height: number }> = {
   "infinity-chest": { width: 1, height: 1 },
   "infinity-pipe": { width: 1, height: 1 },
+  "transport-belt": { width: 1, height: 1 },
+  "pipe": { width: 1, height: 1 },
+  "stone-furnace": { width: 2, height: 2 },
+  "steel-furnace": { width: 2, height: 2 },
+  "electric-furnace": { width: 3, height: 3 },
+  "electric-mining-drill": { width: 3, height: 3 },
 };
 
 export function footprintOf(entityName: string): { width: number; height: number } {

@@ -22,3 +22,30 @@ export interface IREntity {
   recipe?: string;
   infinityFilter?: InfinityFilter;
 }
+
+export type PortKind = "belt" | "pipe" | "wire";
+
+/** A function's or resource instance's port. `offset` is function-local before layout, absolute after. */
+export interface ResolvedPort {
+  side: "north" | "east" | "south" | "west";
+  offset: Position;
+  direction: Direction;
+  kind: PortKind;
+  item?: string;
+  fluid?: string;
+  signal?: string;
+}
+
+export const DIRECTION_TO_NUM: Record<"north" | "east" | "south" | "west", Direction> = {
+  north: 0,
+  east: 4,
+  south: 8,
+  west: 12,
+};
+
+export const DIRECTION_NAME: Record<Direction, string> = {
+  0: "north",
+  4: "east",
+  8: "south",
+  12: "west",
+};

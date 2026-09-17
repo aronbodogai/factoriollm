@@ -1,5 +1,9 @@
-# Not parseable yet — see smelting-column.function.yaml. This is Phase 2's
-# fixture: two instances of the same function, wired with a straight belt run.
+# Phase 2 hard-fail fixture: both smelt1.out and smelt2.in face south (same
+# direction, not perpendicular) but are offset diagonally, so neither the
+# straight case (needs axis alignment) nor the L-bend case (needs
+# perpendicular directions) applies. `factoriollm validate` on this must fail
+# with UNROUTABLE_CONNECTION and never touch RCON — see
+# examples/two-belts-wired.spec.yaml for the successful, live-applied case.
 kind: spec
 server:
   rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }

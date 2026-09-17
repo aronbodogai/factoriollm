@@ -1,7 +1,9 @@
-# Not parseable yet — packages/compiler doesn't implement the format
-# (parse/resolveFunctions/layout) until Phase 1. This documents the target
-# shape described in docs/FORMAT.md so Phase 1's parser has a concrete
-# fixture to compile against.
+# Phase 2 fixture. Note: this function has no inserters, so it doesn't
+# actually smelt anything if you ran it for real — the belt lane just runs
+# past the furnaces. It exists to exercise the format mechanism (params,
+# repeat, ports, the connect.ts router), not as a working blueprint; a real
+# smelting function would need inserters between the belt lane and each
+# furnace, which is a natural follow-up once this is proven.
 kind: function
 name: smelting_column
 params:

@@ -1,0 +1,21 @@
+# Phase 2 fixture: two belt_segment instances with a real 3-tile gap between
+# them, wired by a straight connect.ts run. b1 at y=10..13 (length 4), b1.out
+# at absolute (10,13) facing south; b2 at y=17..20, b2.in at absolute
+# (10,17) facing south — a 3-tile gap for the router to fill.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment.function.yaml
+instances:
+  - id: b1
+    function: belt_segment
+    position: { x: 10, y: 10 }
+    params: { length: 4 }
+  - id: b2
+    function: belt_segment
+    position: { x: 10, y: 17 }
+    params: { length: 4 }
+connections:
+  - { from: b1.out, to: b2.in, kind: belt }

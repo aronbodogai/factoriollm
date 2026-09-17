@@ -1,0 +1,26 @@
+# Phase 2 fixture: the simplest possible function, used to exercise
+# connect.ts's router without unrelated furnace-footprint geometry. A
+# straight run of `length` belt tiles, in/out ports at each end.
+kind: function
+name: belt_segment
+params:
+  length: { type: int, default: 4 }
+size: { width: 1, height: "${length}" }
+entities:
+  - repeat: "${length}"
+    name: transport-belt
+    position: { x: 0, y: "${i}" }
+    direction: south
+ports:
+  in:
+    side: north
+    offset: { x: 0, y: 0 }
+    direction: south
+    kind: belt
+    item: iron-ore
+  out:
+    side: south
+    offset: { x: 0, y: "${length - 1}" }
+    direction: south
+    kind: belt
+    item: iron-ore
