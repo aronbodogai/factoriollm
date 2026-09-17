@@ -1,6 +1,14 @@
 // Parse -> resolveFunctions -> layout -> connect -> ir -> state -> planBuilder.
-// Not implemented yet — Phase 0 only needs the RCON round trip (see
-// packages/cli) and the companion mod's `ping` interface. See
-// docs/FORMAT.md and the phased delivery plan for what lands here next.
+// resolveFunctions/connect land in Phase 2; Phase 1 covers resource-backed
+// instances end to end. See docs/FORMAT.md for the target format.
 
-export {};
+export { CompileError } from "./errors.js";
+export { parseSpec } from "./parse.js";
+export { buildIR } from "./layout.js";
+export { synthesizeResourceInstance } from "./drillPlacer.js";
+export { loadState, saveState, diff, applyResults } from "./state.js";
+export type { StateFile, PlanOp } from "./state.js";
+export { buildPlan } from "./planBuilder.js";
+export type { Plan } from "./planBuilder.js";
+export type { IREntity, InfinityFilter, Position, Direction } from "./ir.js";
+export type { Spec, ResourceInstance } from "./schema/spec.js";

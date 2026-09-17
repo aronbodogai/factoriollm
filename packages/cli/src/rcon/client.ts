@@ -9,6 +9,8 @@ const AUTH_RESPONSE = 2;
 // packets arrive for a while, not when some terminator shows up.
 const SETTLE_MS = 400;
 
+const REPEAT_PROMPT = /please repeat the command/i;
+
 export interface RconOptions {
   host: string;
   port: number;
@@ -30,17 +32,18 @@ function packet(id: number, type: number, body: string): Buffer {
 /**
  * Send one Lua console command over Factorio's Source-RCON interface.
  *
- * Ported from factorio-broadcast's scripts/rcon.js, which found two
- * Factorio-specific quirks the generic RCON protocol doesn't have:
- *  - the first Lua console command on a fresh connection gets back
- *    "Please repeat the command to proceed", so every command is sent twice
- *    unconditionally rather than only retrying on that specific reply.
- *  - there's no end-of-reply sentinel, so replies are collected until a
- *    quiet period passes, then the last non-blank one is returned.
- *
- * Note: RCON's own reply direction isn't the constrained one — the plan-size
- * ceiling this project works around (see docs/FORMAT.md) is on the way IN
- * (a long pasted Lua command is silently rejected), not on the way out.
+ * Started as a port of factorio-broadcast's scripts/rcon.js, which
+ * unconditionally sends every command twice on a fresh connection ("the
+ * first Lua console command gets back 'Please repeat the command to
+ * proceed'"). Verified live against a real 2.0 server that this is wrong in
+ * a way that matters: a single send already executes correctly — but
+ * blindly sending twice doesn't just double a *request*, it double-EXECUTES
+ * the Lua server-side (confirmed: one `create_entity` call sent this way
+ * created two entities), and "take the last non-blank reply" then silently
+ * reports the *second* execution's result, masking the bug for anything
+ * whose output doesn't change between runs (e.g. `ping`, which is why
+ * Phase 0 didn't catch this). So: send once; only resend if the reply is
+ * actually the "please repeat" prompt, and only once.
  */
 export function rconCommand(command: string, opts: RconOptions): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -49,7 +52,9 @@ export function rconCommand(command: string, opts: RconOptions): Promise<string>
 
     let acc = Buffer.alloc(0);
     let authed = false;
-    const replies: string[] = [];
+    let attempt = 0;
+    let nextId = 2;
+    let replies: string[] = [];
     let quiet: NodeJS.Timeout | undefined;
     let settled = false;
 
@@ -61,10 +66,21 @@ export function rconCommand(command: string, opts: RconOptions): Promise<string>
       fn();
     };
 
+    const sendCommand = () => {
+      attempt++;
+      replies = [];
+      sock.write(packet(nextId++, EXEC, command));
+      settle();
+    };
+
     const settle = () => {
       if (quiet) clearTimeout(quiet);
       quiet = setTimeout(() => {
         const body = [...replies].reverse().find((r) => r.trim().length > 0) ?? "";
+        if (attempt === 1 && REPEAT_PROMPT.test(body)) {
+          sendCommand();
+          return;
+        }
         finish(() => resolve(body));
       }, SETTLE_MS);
     };
@@ -95,9 +111,7 @@ export function rconCommand(command: string, opts: RconOptions): Promise<string>
           }
           if (type === AUTH_RESPONSE) {
             authed = true;
-            sock.write(packet(2, EXEC, command));
-            sock.write(packet(4, EXEC, command));
-            settle();
+            sendCommand();
           }
         } else if (type === RESPONSE_VALUE) {
           if (body) replies.push(body);

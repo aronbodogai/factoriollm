@@ -1,14 +1,12 @@
+import type { Spec } from "@factoriollm/compiler";
+
 export interface ServerOptions {
   host: string;
   port: number;
   password: string;
 }
 
-/**
- * Resolve RCON connection settings from CLI flags first, then environment
- * variables, matching the sibling factorio-broadcast dev server's defaults
- * (127.0.0.1:27015) so `factoriollm ping` works against it out of the box.
- */
+/** For `ping`, which has no spec file to read connection settings from. */
 export function resolveServerOptions(flags: Map<string, string>): ServerOptions {
   const host = flags.get("host") ?? process.env.FACTORIOLLM_RCON_HOST ?? "127.0.0.1";
   const port = Number(flags.get("port") ?? process.env.FACTORIOLLM_RCON_PORT ?? "27015");
@@ -26,19 +24,21 @@ export function resolveServerOptions(flags: Map<string, string>): ServerOptions 
   return { host, port, password };
 }
 
-export function parseFlags(argv: string[]): Map<string, string> {
-  const flags = new Map<string, string>();
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg?.startsWith("--")) {
-      const key = arg.slice(2);
-      const value = argv[i + 1];
-      if (value === undefined || value.startsWith("--")) {
-        throw new Error(`flag --${key} needs a value`);
-      }
-      flags.set(key, value);
-      i++;
-    }
+/** For spec-driven commands (plan/apply/destroy/screenshot) — spec.server.rcon wins, flags override it. */
+export function resolveRconFromSpec(spec: Spec, flags: Map<string, string>): ServerOptions {
+  const host = flags.get("host") ?? spec.server.rcon.host;
+  const port = Number(flags.get("port") ?? spec.server.rcon.port);
+  const passwordEnvVar = spec.server.rcon.password_env ?? "FACTORIOLLM_RCON_PASSWORD";
+  const password = flags.get("password") ?? process.env[passwordEnvVar];
+
+  if (!password) {
+    throw new Error(
+      `RCON password required: set ${passwordEnvVar} (or FACTORIOLLM_RCON_PASSWORD) or pass --password <value>`,
+    );
   }
-  return flags;
+  if (!Number.isFinite(port)) {
+    throw new Error(`invalid RCON port: ${flags.get("port") ?? spec.server.rcon.port}`);
+  }
+
+  return { host, port, password };
 }

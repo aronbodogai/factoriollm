@@ -6,44 +6,71 @@ write a spec, `plan` shows the diff, `apply` pushes it, state is tracked so
 re-applying is idempotent and `destroy` tears it down. No player, no
 inventory, no character — entities are created directly via the Lua API.
 
-Status: **Phase 0** — RCON round trip only. `factoriollm ping` calls the
-companion mod's `ping` interface over RCON and prints back its version and
-the server's current tick. The format itself (`docs/FORMAT.md`) isn't
-implemented yet.
+Status: **Phase 1** — resource-backed instances (`infinity_chest` stub) end
+to end: `validate` / `plan` / `apply` / `destroy`, state-file diffing,
+verified live against the shared dev server. Function-backed instances,
+port-to-port wiring, and real mining-drill placement (`docs/FORMAT.md`'s
+full format) land in later phases.
 
 ## Quick start (against the shared dev server)
 
 Needs the same WSL2 headless dev server as the sibling
 [factorio-broadcast](https://github.com/aronbodogai/factorio-broadcast)
-project — factoriollm doesn't stand up its own; see `scripts/dev.sh`.
+project — factoriollm doesn't stand up its own; see `scripts/dev.sh`. The
+CLI itself needs to run under WSL's node too (not Windows'): its runtime
+deps are plain JS, but it talks to a server that only exists inside WSL.
 
 ```bash
 export FACTORIO_BROADCAST_DIR=/mnt/c/Users/<you>/factorio-broadcast
-./scripts/dev.sh start   # forwarded to the sibling's dev.sh
-./scripts/dev.sh ping    # factoriollm: RCON round trip to the companion mod
+./scripts/dev.sh mod      # switch the shared dev instance to mod mode (loads factoriollm alongside factorio-broadcast)
+./scripts/dev.sh start    # forwarded to the sibling's dev.sh
+./scripts/dev.sh ping     # factoriollm: RCON round trip to the companion mod
+
+node packages/cli/dist/index.js plan examples/mining-patch-infinity-stub.spec.yaml --password devpass
+node packages/cli/dist/index.js apply examples/mining-patch-infinity-stub.spec.yaml --password devpass --auto-approve
+node packages/cli/dist/index.js destroy examples/mining-patch-infinity-stub.spec.yaml --password devpass --auto-approve
 ```
 
-`ping` needs the companion mod (`mod/`) loaded on that server alongside
-factorio-broadcast's — see `scripts/dev.sh`'s usage output for the full
-forwarded command list (`setup`, `mod`, `softmod`, `rcon`, ...).
+Build first with `npm run build` (compiles `packages/compiler` then
+`packages/cli` with `tsc` — plain JS output, no native binaries, so it runs
+fine under WSL's node even though `npm install` has to happen on the Windows
+side; this WSL2 instance has no outbound network).
 
 ## Layout
 
 ```
-packages/compiler/   parse -> IR -> diff (not implemented yet, see docs/FORMAT.md)
-packages/cli/        the `factoriollm` binary — currently just `ping`
-mod/                 companion Lua mod: reads a dropped plan, applies it via the Factorio API
+packages/compiler/   parse -> layout -> ir -> state (diff) -> planBuilder
+packages/cli/        the `factoriollm` binary: ping / validate / plan / apply / destroy
+mod/                 companion Lua mod: applies a plan via the Factorio API
 scripts/dev.sh        wraps factorio-broadcast's dev.sh for server lifecycle
 docs/FORMAT.md        the target YAML format and compiler pipeline
 ```
 
-## Why RCON alone isn't enough
+## How a plan reaches the server
 
-Factorio's RCON silently rejects long pasted Lua — there's a hard ceiling on
-a single command's size. So bulk data never goes over RCON directly: the CLI
-will write a compiled plan JSON into the server's `script-output/`
-directory, then send a *short* RCON trigger
-(`remote.call("factoriollm","apply","plan-<id>.json")`); the companion mod
-reads the file itself via `helpers.read_file` and applies it in Lua. RCON
-replies aren't constrained the same way, so results come back directly as
-the call's return value — `ping` already exercises that path end to end.
+Factorio's Lua API can **write** to `script-output/` (`helpers.write_file`)
+but cannot **read** arbitrary files back (`helpers.read_file` doesn't exist
+— verified live, not assumed) — mods are write-only to the host filesystem
+by design. So the plan JSON travels as the RCON command's own argument: the
+CLI passes it as a Lua *string* literal (JSON and Lua table-literal syntax
+aren't compatible), and the companion mod decodes it with
+`helpers.json_to_table` before `factoriollm.apply` ever sees it — no file
+round-trip needed for input. This has been tested up to 100,000 characters
+in one command with no issue; the CLI refuses anything over 50,000 chars for
+now rather than silently failing, since chunked delivery for larger plans
+isn't implemented yet.
+
+RCON replies aren't constrained the same way, so results come back directly
+as `remote.call`'s return value.
+
+**A correctness note worth keeping in mind if you're scripting RCON calls
+directly**: don't assume a command needs sending twice. It doesn't on this
+server — a single send executes correctly. Blindly sending every command
+twice (a pattern borrowed from factorio-broadcast's `scripts/rcon.js`, whose
+comment claims the first command in a session needs repeating) was verified
+live to **double-execute** side-effecting Lua — one `create_entity` call
+sent that way created two entities — while "take the last reply" silently
+hid it for anything whose output doesn't change between runs, which is
+exactly why Phase 0's `ping` test never caught it. `packages/cli/src/rcon/client.ts`
+sends once and only resends if the reply is actually the "please repeat"
+prompt.

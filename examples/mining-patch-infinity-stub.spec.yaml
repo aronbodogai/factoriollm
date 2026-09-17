@@ -1,7 +1,6 @@
-# Not parseable yet — see smelting-column.function.yaml. This is Phase 1's
-# fixture: a single resource-backed instance stood up as an infinity-chest
-# stub, no hand-authored function and no connections. `apply` on this should
-# create one infinity-chest at the declared position; `plan` right after
+# Phase 1 fixture: a single resource-backed instance stood up as an
+# infinity-chest stub, no hand-authored function and no connections. `apply`
+# creates one infinity-chest at the declared position; `plan` right after
 # should show no diff.
 kind: spec
 server:
