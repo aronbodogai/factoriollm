@@ -1,0 +1,34 @@
+# Not parseable yet — packages/compiler doesn't implement the format
+# (parse/resolveFunctions/layout) until Phase 1. This documents the target
+# shape described in docs/FORMAT.md so Phase 1's parser has a concrete
+# fixture to compile against.
+kind: function
+name: smelting_column
+params:
+  furnace_count: { type: int, default: 6 }
+  furnace_type: { type: string, default: "stone-furnace" }
+  recipe: { type: string }
+size: { width: 3, height: "${furnace_count * 2}" }
+entities:
+  - repeat: "${furnace_count}"
+    name: "${furnace_type}"
+    position: { x: 1, y: "${i * 2}" }
+    direction: south
+    recipe: "${recipe}"
+  - repeat: "${furnace_count}"
+    name: transport-belt
+    position: { x: 0, y: "${i * 2}" }
+    direction: south
+ports:
+  in:
+    side: west
+    offset: { x: 0, y: 0 }
+    direction: south
+    kind: belt
+    item: iron-ore
+  out:
+    side: east
+    offset: { x: 2, y: "${(furnace_count-1)*2}" }
+    direction: south
+    kind: belt
+    item: iron-plate

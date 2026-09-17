@@ -1,0 +1,14 @@
+# Not parseable yet — see smelting-column.function.yaml. This is Phase 1's
+# fixture: a single resource-backed instance stood up as an infinity-chest
+# stub, no hand-authored function and no connections. `apply` on this should
+# create one infinity-chest at the declared position; `plan` right after
+# should show no diff.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+instances:
+  - id: patch1
+    resource: iron-ore
+    resource_mode: infinity_chest
+    position: { x: 40, y: 40 }

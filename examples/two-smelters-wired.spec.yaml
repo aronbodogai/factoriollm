@@ -1,0 +1,19 @@
+# Not parseable yet — see smelting-column.function.yaml. This is Phase 2's
+# fixture: two instances of the same function, wired with a straight belt run.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - smelting-column.function.yaml
+instances:
+  - id: smelt1
+    function: smelting_column
+    position: { x: 10, y: 10 }
+    params: { furnace_count: 6, recipe: iron-plate }
+  - id: smelt2
+    function: smelting_column
+    position: { x: 20, y: 10 }
+    params: { furnace_count: 6, recipe: copper-plate }
+connections:
+  - { from: smelt1.out, to: smelt2.in, kind: belt }

@@ -1,0 +1,9 @@
+{
+  "name": "factoriollm",
+  "version": "0.0.1",
+  "title": "factoriollm",
+  "author": "aron",
+  "factorio_version": "2.0",
+  "dependencies": ["base >= 2.0.0"],
+  "description": "Headless deploy target for factoriollm-compiled factory plans."
+}
