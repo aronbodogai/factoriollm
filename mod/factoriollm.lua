@@ -47,16 +47,31 @@ local function apply_recipe(entity, recipe)
   end
 end
 
+-- create_entity does NOT validate placement the way a player or blueprint
+-- would — verified live: it happily builds on water and lets two entities
+-- overlap at the exact same position, both silently "succeeding". Only
+-- can_place_entity actually performs that check, so it has to run first and
+-- be treated as the real gate; create_entity's own nil-return case is now
+-- just a defensive fallback for whatever can_place_entity doesn't catch.
 local function do_create(surface, entity_spec)
-  local created = surface.create_entity({
+  local params = {
     name = entity_spec.name,
     position = entity_spec.position,
     direction = entity_spec.direction or 0,
     force = "player",
-  })
+  }
+
+  if not surface.can_place_entity(params) then
+    error(string.format(
+      "cannot place %s at (%s,%s) — off water/land, out of bounds, or overlapping an existing entity",
+      entity_spec.name, entity_spec.position.x, entity_spec.position.y
+    ))
+  end
+
+  local created = surface.create_entity(params)
   if not created then
     error(string.format(
-      "create_entity returned nil for %s at (%s,%s)",
+      "create_entity returned nil for %s at (%s,%s) despite can_place_entity saying yes",
       entity_spec.name, entity_spec.position.x, entity_spec.position.y
     ))
   end
