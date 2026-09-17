@@ -21,6 +21,18 @@ const FOOTPRINTS: Record<string, { width: number; height: number }> = {
   "steel-furnace": { width: 2, height: 2 },
   "electric-furnace": { width: 3, height: 3 },
   "electric-mining-drill": { width: 3, height: 3 },
+  "inserter": { width: 1, height: 1 },
+  "burner-inserter": { width: 1, height: 1 },
+  "assembling-machine-1": { width: 3, height: 3 },
+  "assembling-machine-2": { width: 3, height: 3 },
+  "assembling-machine-3": { width: 3, height: 3 },
+  "solar-panel": { width: 3, height: 3 },
+  "accumulator": { width: 2, height: 2 },
+  "small-electric-pole": { width: 1, height: 1 },
+  "medium-electric-pole": { width: 1, height: 1 },
+  "offshore-pump": { width: 1, height: 1 },
+  "boiler": { width: 3, height: 2 },
+  "steam-engine": { width: 3, height: 5 },
 };
 
 export function footprintOf(entityName: string): { width: number; height: number } {

@@ -1,0 +1,26 @@
+# A row of solar panels with enough medium-electric-poles to actually cover
+# all of them — verified live that ONE end-pole is not enough: a
+# medium-electric-pole's supply_radius is only 3.5 tiles, so a panel more
+# than ~7 tiles from the nearest pole reports
+# "not_plugged_in_electric_network" (confirmed on a real placed panel), even
+# though wire_reach (9) would happily link the poles to each other. Poles
+# spaced ~6 tiles apart keep every panel within someone's supply radius.
+# Fixed at 3 poles for count=5 (not yet param-scaled — this project's expr
+# language doesn't have integer division/modulo yet).
+kind: function
+name: solar_row
+params:
+  count: { type: int, default: 5 }
+size: { width: "${count * 3}", height: 4 }
+entities:
+  - repeat: "${count}"
+    name: solar-panel
+    position: { x: "${i * 3}", y: 0 }
+  # y=3: just south of the panel row (panels are 3 tall, y=0..3), not inside it.
+  - name: medium-electric-pole
+    position: { x: 2, y: 3 }
+  - name: medium-electric-pole
+    position: { x: 8, y: 3 }
+  - name: medium-electric-pole
+    position: { x: 13, y: 3 }
+ports: {}

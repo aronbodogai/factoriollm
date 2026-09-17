@@ -1,0 +1,32 @@
+# Fresh vanilla no-biters test map, building toward 60 automation-science-pack/min.
+# Built incrementally: power first, then smelting, then assembly. Uses this
+# server's daytime frozen at noon (surf.freeze_daytime=true, surf.daytime=0.5 —
+# a test-setup step, not part of the format) so solar output is constant and
+# no accumulators are needed.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - solar-row.function.yaml
+instances:
+  - id: solar1
+    function: solar_row
+    position: { x: 0, y: 0 }
+    params: { count: 5 }
+  - id: solar2
+    function: solar_row
+    position: { x: 0, y: 4 }
+    params: { count: 5 }
+  - id: solar3
+    function: solar_row
+    position: { x: 0, y: 8 }
+    params: { count: 5 }
+  - id: solar4
+    function: solar_row
+    position: { x: 0, y: 12 }
+    params: { count: 5 }
+  - id: solar5
+    function: solar_row
+    position: { x: 0, y: 16 }
+    params: { count: 5 }
