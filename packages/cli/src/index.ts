@@ -5,6 +5,7 @@ import { planCommand, defaultStatePath } from "./commands/plan.js";
 import { applyCommand } from "./commands/apply.js";
 import { destroyCommand } from "./commands/destroy.js";
 import { scanResourcesCommand } from "./commands/scanResources.js";
+import { surfacesCommand } from "./commands/surfaces.js";
 import { parseArgs } from "./args.js";
 import { resolveServerOptions } from "./server.js";
 
@@ -15,7 +16,8 @@ commands:
   validate <spec.yaml>          parse + resolve, no server contact
   plan <spec.yaml> [--state f]  show the diff against state, no changes made
   apply <spec.yaml> [--state f] [--auto-approve] [--smoke-check --smoke-item X [--smoke-sidecar url] [--smoke-surface X] [--smoke-timeout ms]]
-  destroy <spec.yaml> [--state f] [--auto-approve]
+  destroy <spec.yaml> [--state f] [--auto-approve] [--delete-surface]
+  surfaces                      list the factoriollm-managed (fllm-*) surfaces
   scan-resources <spec.yaml> --left N --top N --right N --bottom N [--resource X] [--surface X]
 
 RCON settings default to spec.server.rcon (ping falls back to
@@ -60,9 +62,19 @@ async function main(): Promise<void> {
     case "destroy": {
       const specPath = requireSpecPath(positionals);
       const statePath = flags.get("state") ?? defaultStatePath(specPath);
-      await destroyCommand(specPath, statePath, flags, booleanFlags.has("auto-approve"));
+      await destroyCommand(
+        specPath,
+        statePath,
+        flags,
+        booleanFlags.has("auto-approve"),
+        booleanFlags.has("delete-surface"),
+      );
       break;
     }
+
+    case "surfaces":
+      await surfacesCommand(resolveServerOptions(flags));
+      break;
 
     case "scan-resources": {
       const specPath = requireSpecPath(positionals);
