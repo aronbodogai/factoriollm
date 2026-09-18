@@ -72,3 +72,30 @@ export interface DeleteSurfaceResult {
 export async function deleteSurface(surface: string, rconOpts: RconOptions): Promise<DeleteSurfaceResult> {
   return callRemote<DeleteSurfaceResult>("delete_surface", { surface }, rconOpts);
 }
+
+export interface SpeedResult {
+  speed: number;
+  tick: number;
+}
+
+export interface SetSpeedResult {
+  ok: boolean;
+  previous?: number;
+  speed?: number;
+  tick?: number;
+  error?: string;
+}
+
+/** Reads game.speed (1 = normal, 60 UPS). Server-global — there is no per-surface speed. */
+export async function getSpeed(rconOpts: RconOptions): Promise<SpeedResult> {
+  return callRemote<SpeedResult>("get_speed", {}, rconOpts);
+}
+
+/**
+ * Sets game.speed and returns the value it replaced, so a caller that
+ * fast-forwards for a measurement can put back exactly what it found. The
+ * mod is the authority on the allowed range; it refuses rather than clamps.
+ */
+export async function setSpeed(speed: number, rconOpts: RconOptions): Promise<SetSpeedResult> {
+  return callRemote<SetSpeedResult>("set_speed", { speed }, rconOpts);
+}

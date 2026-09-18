@@ -6,6 +6,7 @@ import { applyCommand } from "./commands/apply.js";
 import { destroyCommand } from "./commands/destroy.js";
 import { scanResourcesCommand } from "./commands/scanResources.js";
 import { surfacesCommand } from "./commands/surfaces.js";
+import { speedCommand } from "./commands/speed.js";
 import { parseArgs } from "./args.js";
 import { resolveServerOptions } from "./server.js";
 
@@ -15,14 +16,15 @@ commands:
   ping                          round-trip an RCON call to the companion mod
   validate <spec.yaml>          parse + resolve, no server contact
   plan <spec.yaml> [--state f]  show the diff against state, no changes made
-  apply <spec.yaml> [--state f] [--auto-approve] [--smoke-check --smoke-item X [--smoke-sidecar url] [--smoke-surface X] [--smoke-timeout ms]]
+  apply <spec.yaml> [--state f] [--auto-approve] [--smoke-check --smoke-item X [--smoke-sidecar url] [--smoke-surface X] [--smoke-timeout ms] [--smoke-speed N]]
   destroy <spec.yaml> [--state f] [--auto-approve] [--delete-surface]
   surfaces                      list the factoriollm-managed (fllm-*) surfaces
+  speed [<N>|reset]             show or set game.speed (1 = normal 60 UPS; server-global)
   scan-resources <spec.yaml> --left N --top N --right N --bottom N [--resource X] [--surface X]
 
-RCON settings default to spec.server.rcon (ping falls back to
-FACTORIOLLM_RCON_HOST / _PORT / _PASSWORD); --host/--port/--password override
-either.`;
+RCON settings default to spec.server.rcon (ping, surfaces and speed fall back
+to FACTORIOLLM_RCON_HOST / _PORT / _PASSWORD); --host/--port/--password
+override either.`;
 
 function requireSpecPath(positionals: string[]): string {
   const specPath = positionals[0];
@@ -74,6 +76,10 @@ async function main(): Promise<void> {
 
     case "surfaces":
       await surfacesCommand(resolveServerOptions(flags));
+      break;
+
+    case "speed":
+      await speedCommand(positionals[0], resolveServerOptions(flags));
       break;
 
     case "scan-resources": {
