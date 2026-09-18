@@ -31,6 +31,15 @@ instances:
     function: science_assembler
     position: { x: 54, y: -8 }
   # in tile (57,-20) = directly south of iron_gear_3.out (57,-21).
+  #
+  # (57,-17) and (57,-16) of this straight run are NOT plain belt tiles
+  # live: they collide with science-line-3-bridge-6's own copper crossing
+  # row (y=-16) and are bridged instead by a long-handed-inserter hop, see
+  # science-line-3-gear-reroute.spec.yaml. This file's state.json has been
+  # hand-trimmed to drop gear_bridge_3.e0[3]/[4] (those 2 tiles) so this
+  # spec's own belt_segment declaration doesn't fight the reroute on a
+  # future re-apply - the `length: 12` below is the intended/historical
+  # straight path, not what's live at those 2 tiles.
   - id: gear_bridge_3
     function: belt_segment
     position: { x: 57, y: -20 }
