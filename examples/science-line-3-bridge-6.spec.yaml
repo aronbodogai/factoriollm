@@ -1,0 +1,51 @@
+# Copper long-haul bridge, segment 6 of 6: the westward jog from
+# copper_furnace_3's column (x=80) to science_3's column (x=54), plus the
+# turn back south. See science-line-3-bridge-1.spec.yaml for why this jog
+# exists at all, and turn-left-from-south/turn-down-from-west.function.yaml
+# for the new (this-session) elbow pieces it needed.
+#
+# turn_left_3 sits one tile south of science-line-3-bridge-5's last belt
+# (80,-17) -> (80,-16), physically adjacent (cross-file join, no symbolic
+# `connections:`). Route: south (bridge-5) -> turn_left_3 (turns west) ->
+# belt_west_3 (25 tiles, x79..55) -> turn_down_3 (turns south, at x=54,
+# matching science_3.in_copper's column) -> south_approach_3 (10 tiles,
+# y=-15..-6) -> science_3.in_copper (54,-5), one tile further south, again
+# physically adjacent (in science-line-3-science.spec.yaml).
+#
+# Live-verified clear immediately before this apply (RCON
+# find_entities_filtered, real built entities excluded/decorations
+# destroyed as needed): the y=-16 jog row (x54-80) and the x=54 approach
+# column (y=-16..-5) both came back clear of other lines' real
+# infrastructure - only the y=-24/-20 rows tried first were blocked by
+# line 2's science_2/gear_2 footprint, hence this specific y=-16 choice.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - turn-left-from-south.function.yaml
+  - belt-strip-west.function.yaml
+  - turn-down-from-west.function.yaml
+  - belt-segment.function.yaml
+instances:
+  - id: turn_left_3
+    function: turn_left_from_south
+    position: { x: 80, y: -16 }
+  - id: belt_west_3
+    function: belt_strip_west
+    position: { x: 55, y: -16 }
+    params: { length: 25 }
+  - id: turn_down_3
+    function: turn_down_from_west
+    position: { x: 54, y: -16 }
+  - id: south_approach_3
+    function: belt_segment
+    position: { x: 54, y: -15 }
+    params: { length: 10 }
+connections:
+  - { from: turn_left_3.out, to: belt_west_3.in, kind: belt }
+  - { from: belt_west_3.out, to: turn_down_3.in, kind: belt }
+  - { from: turn_down_3.out, to: south_approach_3.in, kind: belt }
+# south_approach_3.out lands at (54,-6), direction south - one tile north
+# of science_3.in_copper (54,-5) in science-line-3-science.spec.yaml,
+# physically adjacent (cross-file join).

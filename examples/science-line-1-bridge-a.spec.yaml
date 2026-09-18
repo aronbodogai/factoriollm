@@ -1,0 +1,77 @@
+# Line 1's iron->copper bridge, part 1 of 4 (REVISED): off iron_gear_1.out
+# (a different file/state — joined by exact absolute-position adjacency,
+# not `connections:`), dodge south past iron_solar_1's footprint and this
+# line's own gear cluster, then east to a genuinely clear north-south
+# corridor at x=115.
+#
+# REVISION HISTORY (kept because it's the real story of building on a
+# contested shared map): the original version of this file turned west at
+# (76,-6) to a corridor at x=53. That corridor looked clear from a coarse
+# probe, but the FULL apply (science-line-1-bridge-b/c) hit ~10 scattered
+# collisions with another line's own iron cluster/bridge belts crossing
+# x=53 at various y between -18 and -45 — some rows (y=-31.5, y=-39.5)
+# turned out to be blocked across the ENTIRE x=47..105 range (that other
+# line's own long bridge, mirroring this exact problem). Widening the
+# search (can_place_entity sweeps at x=20 through x=120) found x=90 mostly
+# clear but for 2 tiles at iron_gear_1's own poles plus a full-width
+# blocker row at y=-49.5 spanning x=65..105; x=115 came back with ZERO
+# obstructions for the entire ~95-tile run down to science_1's latitude.
+# The old x=53 belts (science-line-1-bridge-b/c, ~70-odd tiles, mostly
+# successful) are orphaned in place — harmless (just unused belts sitting
+# on the map) — rather than spending more of this task's build budget
+# tearing them out.
+#
+# This file's own route still has to dodge iron_solar_1 (x64-79,y-5..-2)
+# and iron_gear_1's own poles/inserters (x70-76,y-7..-9) — both confirmed
+# live via can_place_entity — hence south past y=0 before turning east.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment.function.yaml
+  - belt-segment-east.function.yaml
+  - turn-right-from-south.function.yaml
+  - turn-down-from-east.function.yaml
+  - turn-up-from-east.function.yaml
+instances:
+  # Fills the one gap tile south of iron_gear_1.out (76,-8) — touches it by
+  # exact position, cross-file, no connections: entry needed.
+  - id: bridge1_gear_gap
+    function: belt_segment
+    position: { x: 76, y: -7 }
+    params: { length: 1 }
+  - id: bridge1_tr1
+    function: turn_right_from_south
+    position: { x: 76, y: -6 }
+  - id: bridge1_east0
+    function: belt_segment_east
+    position: { x: 77, y: -6 }
+    params: { length: 3 }
+  - id: bridge1_td1
+    function: turn_down_from_east
+    position: { x: 80, y: -6 }
+  # Straight south past iron_solar_1's bottom edge (y=-2) to y=0, clear of
+  # everything in this line's own cluster.
+  - id: bridge1_south1
+    function: belt_segment
+    position: { x: 80, y: -5 }
+    params: { length: 6 }
+  - id: bridge1_tr2
+    function: turn_right_from_south
+    position: { x: 80, y: 1 }
+  - id: bridge1_east1
+    function: belt_segment_east
+    position: { x: 81, y: 1 }
+    params: { length: 34 }
+  - id: bridge1_tu1
+    function: turn_up_from_east
+    position: { x: 115, y: 1 }
+connections:
+  - { from: bridge1_gear_gap.out, to: bridge1_tr1.in, kind: belt }
+  - { from: bridge1_tr1.out, to: bridge1_east0.in, kind: belt }
+  - { from: bridge1_east0.out, to: bridge1_td1.in, kind: belt }
+  - { from: bridge1_td1.out, to: bridge1_south1.in, kind: belt }
+  - { from: bridge1_south1.out, to: bridge1_tr2.in, kind: belt }
+  - { from: bridge1_tr2.out, to: bridge1_east1.in, kind: belt }
+  - { from: bridge1_east1.out, to: bridge1_tu1.in, kind: belt }

@@ -1,0 +1,28 @@
+# Horizontal mirror of belt-segment.function.yaml, moving east. Used for the
+# short jogs that route line 1's iron->science bridge around other lines'
+# already-built infrastructure (drills/poles/solar found squarely on the
+# straight-line path between line 1's iron and copper clusters — this
+# server is shared with 3 other concurrently-building lines).
+kind: function
+name: belt_segment_east
+params:
+  length: { type: int, default: 4 }
+size: { width: "${length}", height: 1 }
+entities:
+  - repeat: "${length}"
+    name: transport-belt
+    position: { x: "${i}", y: 0 }
+    direction: east
+ports:
+  in:
+    side: west
+    offset: { x: 0, y: 0 }
+    direction: east
+    kind: belt
+    item: iron-gear-wheel
+  out:
+    side: east
+    offset: { x: "${length - 1}", y: 0 }
+    direction: east
+    kind: belt
+    item: iron-gear-wheel

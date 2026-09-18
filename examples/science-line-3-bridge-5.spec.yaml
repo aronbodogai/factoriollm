@@ -1,0 +1,62 @@
+# Copper long-haul bridge, segment 5 of 6 (last straight-south segment
+# before the jog west). See science-line-3-bridge-1.spec.yaml for the full
+# rationale. in tile (80,-34) = directly south of science-line-3-bridge-4's
+# last belt (80,-35). Originally a single 18-tile belt_segment ending at
+# (80,-17), one tile north of science-line-3-bridge-6's turn_left_3
+# (80,-16).
+#
+# JAM FIX (this session, diagnosed+fixed live via RCON, not through a normal
+# apply): at some point after this file's original apply, another line's
+# real electric-furnace + inserter (not this project's decoration/ore —
+# confirmed live via find_entities_filtered: electric-furnace footprint
+# bbox=(78.3,-21.7)-(80.7,-19.3), an inserter at (81.5,-20.5)) got built
+# directly on top of this column at x=80, y=-22..-20, colliding with
+# e0[11..14]. Symptom confirmed live: e0[11] (80,-23) had been silently
+# left facing EAST (dir=4) instead of south (a leftover from a previous
+# botched/interrupted apply attempt at this same spot — state.json still
+# said direction 8, but `plan` never re-checks live entity state against
+# the game, only against state.json, so this drift was invisible to
+# `plan`/`apply` and only showed up by querying the live entity directly),
+# and e0[12]/e0[13]/e0[14] (80,-21)/(80,-20)/(80,-19) were simply never
+# built (can_place_entity now returns false there — the tile is physically
+# inside the foreign furnace's bounding box).
+#
+# Fix applied: shrunk this file's own belt_segment to length 11 (e0[0..10],
+# (80,-34)..(80,-24) — all untouched, still straight south, still
+# compiler-managed). The remaining stretch (e0[11] onward) is NOT
+# reproducible as a straight belt_segment any more (the furnace physically
+# blocks the column), so it's no longer modeled by this file at all: e0[11]
+# itself was hand-fixed live (RCON) to face WEST, kicking off a hand-built
+# detour that is intentionally NOT compiler-managed (no clean single-shape
+# function fits "turn west, underground-cross a perpendicular foreign belt
+# at x=76, run south, turn east, rejoin at (80,-17)"). The detour's shape,
+# confirmed live and now also recorded (informational only, not re-appliable
+# as this spec) in science-line-3-bridge-5.state.json under the
+# "bridge3_5_detour.*" keys:
+#   (80,-23)e0[10 as west-turn] -> (79,-23) -> (78,-23) west
+#   -> underground-belt input (77,-23) / output (75,-23), west
+#      (crosses UNDER a foreign north-south belt column at x=76 —
+#      confirmed live this is a plain single-tile-gap pair, immediately
+#      verified paired via entity.neighbours, not the long-distance
+#      unreliable-pairing case the project's underground-belt bug affects)
+#   -> (74,-23) turn south -> (74,-22)..(74,-17) south, 6 tiles
+#   -> (74,-17) [same tile as last south belt] turn east
+#   -> (75,-17)..(79,-17) east, 5 tiles
+#   -> rejoins the ORIGINAL (80,-17) belt (untouched, still south,
+#      side-merge same as every other corner in this project).
+# All tiles verified clear via can_place_entity before placing (see this
+# session's RCON transcript). Verified live post-fix: copper_drill_3 and
+# copper_furnace_3 both status=working (no more waiting_for_space
+# backpressure), no gaps anywhere else along the full x=80 column or the
+# westward jog/south approach in bridge-6.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment.function.yaml
+instances:
+  - id: bridge3_5
+    function: belt_segment
+    position: { x: 80, y: -34 }
+    params: { length: 11 }

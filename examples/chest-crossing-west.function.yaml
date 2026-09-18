@@ -1,0 +1,36 @@
+# Inserter+chest+inserter bridge for crossing a single obstructing tile (or
+# a few) a straight/L-bend belt run can't route around. Replaces the
+# underground-belt approach (underground-crossing-west(-wide).function.yaml):
+# confirmed live, twice, with both explicit type: input/output AND with
+# type omitted entirely, that programmatic surface.create_entity() for
+# underground-belt always comes back as belt_to_ground_type "input" for
+# BOTH placed entities — no auto-pairing, no override taking effect (this
+# may be a create_entity-vs-blueprint-placement difference in this
+# Factorio version; not resolved, just avoided). Inserters/chests are
+# ordinary entities with none of that pairing magic, so this is the
+# reliable fallback: belt(west end) -> inserter1(picks up from the belt to
+# its east, drops into chest to its west) -> chest -> inserter2(picks up
+# from chest, drops onto belt to its west) -> belt(east end, `in` port).
+# Spans 5 tiles, same footprint as the wide underground hop it replaces.
+kind: function
+name: chest_crossing_west
+params: {}
+size: { width: 5, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: west
+  - name: inserter
+    position: { x: 1, y: 0 }
+    direction: east
+  - name: iron-chest
+    position: { x: 2, y: 0 }
+  - name: inserter
+    position: { x: 3, y: 0 }
+    direction: east
+  - name: transport-belt
+    position: { x: 4, y: 0 }
+    direction: west
+ports:
+  in: { side: east, offset: { x: 4, y: 0 }, direction: west, kind: belt, item: iron-gear-wheel }
+  out: { side: west, offset: { x: 0, y: 0 }, direction: west, kind: belt, item: iron-gear-wheel }

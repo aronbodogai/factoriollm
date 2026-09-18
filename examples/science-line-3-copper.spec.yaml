@@ -1,0 +1,68 @@
+# Line 3 of 4 - copper half: real drill -> real furnace (own local solar
+# power). The long belt bridge up to science_3 lives in separate
+# science-line-3-bridge-*.spec.yaml files (entity-count-per-apply budget;
+# see the task brief's FILE CONVENTION note), landing at
+# science-line-3-science.spec.yaml.
+#
+# DEVIATIONS from the task brief's copper hint, all confirmed live via RCON
+# immediately before writing this file:
+#  - copper_furnace_3 placed at (74,-116), much further east than the old
+#    pre-crash copper-chain-3.spec.yaml's detour to (76,-114) (a different,
+#    obstacle-driven route). This session's build area at x50-75 is heavily
+#    contested by lines 2/4's own copper chains and bridges (confirmed live:
+#    line 2's copper_furnace_2 sits at (48,-112), line 2's bridge jog
+#    occupies x=54/62 near y=-108, line 4 operates further south/east
+#    again) - x=74 was the first column, scanned x=41..112 in steps, found
+#    completely clear both at the furnace footprint AND for the ~26-tile
+#    east leg of the drill->furnace L-bend (only decorative
+#    tree-08/dead-tree-desert in the way, destroyed below) and matching the
+#    long north-south bridge column (x=80) chosen for
+#    science-line-3-bridge-*.spec.yaml/science-line-3-science.spec.yaml
+#    (furnace.out.x = 74+6 = 80, a straight feed with no jog needed).
+#  - copper_solar_3 placed close to the furnace at (58,-125) rather than the
+#    old hint's (60,-128): confirmed clear except decorative rocks/trees
+#    (destroyed below); two relay poles bridge the gap back to the drill and
+#    furnace (each hop <9 tiles, within wire_reach).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - furnace-row.function.yaml
+  - solar-row.function.yaml
+  - single-pole.function.yaml
+instances:
+  - id: copper_drill_3
+    resource: copper-ore
+    resource_mode: real_drills
+    position: { x: 50, y: -119 }
+    bounding_box: { left: 50, top: -119, right: 56, bottom: -113 }
+  # Synthesized out port = anchor + (3,1) = (53,-118), direction east.
+  - id: copper_furnace_3
+    function: furnace_row
+    position: { x: 74, y: -116 }
+    params: { count: 1 }
+  - id: copper_drill_pole_3
+    function: single_pole
+    position: { x: 50, y: -122 }
+  - id: copper_relay_3a
+    function: single_pole
+    position: { x: 62, y: -122 }
+  # copper_relay_3b (originally planned at (70,-118)) was dropped: it kept
+  # silently failing/disappearing across several applies (this server's
+  # heavy concurrent construction from lines 1/2/4 makes some placements
+  # transient - see the other inline notes below). copper_relay_3c alone
+  # bridges solar to the furnace's own pole within wire_reach, confirmed
+  # live (electric_network_id matches across the whole chain).
+  - id: copper_relay_3c
+    function: single_pole
+    position: { x: 73, y: -117 }
+  - id: copper_solar_3
+    function: solar_row
+    position: { x: 58, y: -125 }
+    params: { count: 5 }
+connections:
+  - { from: copper_drill_3.out, to: copper_furnace_3.in, kind: belt }
+# copper_furnace_3.out lands at (74+6, -116+1) = (80,-115), direction south
+# -- picked up by science-line-3-bridge-1.spec.yaml's belt run, physically
+# adjacent (no cross-file `connections:` possible per docs/FORMAT.md).

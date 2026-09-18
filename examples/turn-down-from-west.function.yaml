@@ -1,0 +1,15 @@
+# 1x1 "elbow" waypoint: absorbs a west-arriving belt run and re-emits it
+# south. Mirror of turn-down-from-east.function.yaml - pairs with
+# turn-left-from-south.function.yaml to complete science-line-3's copper
+# bridge's south->west->south jog around other lines' infrastructure.
+kind: function
+name: turn_down_from_west
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: south
+ports:
+  in: { side: east, offset: { x: 0, y: 0 }, direction: west, kind: belt, item: copper-plate }
+  out: { side: south, offset: { x: 0, y: 0 }, direction: south, kind: belt, item: copper-plate }

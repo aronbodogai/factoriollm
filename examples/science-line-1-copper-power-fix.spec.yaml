@@ -1,0 +1,23 @@
+# Power fix for line 1's copper cluster: confirmed live that
+# copper_furnace_1's own pole (50.5,-98.5, part of furnace_row's built-in
+# pole) ended up on a DIFFERENT electric network (id 39, shared with
+# another line's stray pole at 42.5,-97.5) than copper_solar_1's poles and
+# copper_drill_pole_1 (network 9) — the furnace was repositioned from
+# (38,-102) to (47,-102) during the build (see
+# science-line-1-copper-science.spec.yaml's header) without rechecking the
+# relay distance, and the new gap (~17 tiles from the nearest solar pole)
+# is well past wire_reach (9). All of line 1's copper-side machinery
+# reported status "no_power" as a result. One relay pole roughly midway
+# between copper_drill_pole_1 (41.5,-106.5) and the furnace's pole
+# (50.5,-98.5) closes the gap (~6 tiles to each).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - single-pole.function.yaml
+instances:
+  - id: copper_power_relay_1
+    function: single_pole
+    position: { x: 46, y: -103 }
+connections: []

@@ -27,6 +27,12 @@ export const entityTemplateSchema = z.object({
   position: z.object({ x: numberOrExprSchema, y: numberOrExprSchema }),
   direction: directionSchema.default("north"),
   recipe: z.string().optional(), // literal, or "${param}"
+  // underground-belt/underground-pipe only: which end this entity is.
+  // Needed to cross a single obstructing tile (e.g. another line's belt)
+  // that a straight/L-bend run can't route around — added this task after
+  // hitting exactly that live (see turn-left-from-south.function.yaml's
+  // sibling notes / science-line-2-bridge-c.spec.yaml).
+  type: z.enum(["input", "output"]).optional(),
   repeat: numberOrExprSchema.optional(),
   // For an infinity-chest/infinity-pipe entity authored directly in a
   // function (e.g. a test "void" sink: mode "at-most", count 0 deletes

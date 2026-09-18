@@ -1,0 +1,44 @@
+# Line 1's iron->copper bridge, part 6 of 6 (final, REVISED a 2nd time):
+# finishes the westward run from x=66 down to x=57 (touches
+# bridge5_west1b.out @ (66,-96) by exact position, cross-file), hops over
+# x=62 with a long-handed-inserter (2-tile reach) instead of an
+# underground-belt — see science-line-1-bridge-e.spec.yaml's header for
+# why (programmatic underground-belt placement here never pairs its
+# input/output ends) — then turns south and closes the last 2-tile gap
+# into science_1.in_gear @ (56,-93) (a different file/state, touched by
+# exact position).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment-west.function.yaml
+  - belt-segment.function.yaml
+  - turn-down-from-west.function.yaml
+  - long-inserter-hop-west.function.yaml
+instances:
+  - id: bridge6_west2
+    function: belt_segment_west
+    position: { x: 65, y: -96 }
+    params: { length: 1 }
+  # Picks up from bridge6_west2 at x=65 (2 east) and drops directly onto
+  # bridge6_west3's belt at x=61 (2 west), skipping x=62 (another line's
+  # own long north-south bridge, confirmed continuous from y=-33 to below
+  # y=-101) entirely — no entity of this line's ever occupies x=62 itself.
+  - id: bridge6_hop
+    function: long_inserter_hop_west
+    position: { x: 63, y: -96 }
+  - id: bridge6_west3
+    function: belt_segment_west
+    position: { x: 57, y: -96 }
+    params: { length: 5 }
+  - id: bridge6_td
+    function: turn_down_from_west
+    position: { x: 56, y: -96 }
+  - id: bridge6_final
+    function: belt_segment
+    position: { x: 56, y: -95 }
+    params: { length: 2 }
+connections:
+  - { from: bridge6_west3.out, to: bridge6_td.in, kind: belt }
+  - { from: bridge6_td.out, to: bridge6_final.in, kind: belt }

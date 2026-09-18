@@ -1,0 +1,18 @@
+# 1x1 "elbow" waypoint: absorbs a south-arriving belt run and re-emits it
+# west. Mirror of turn-right-from-south.function.yaml - needed because this
+# project only shipped rightward-turning elbows (turn-right-from-*,
+# turn-down/up-from-east), and science-line-3's copper bridge needs to jog
+# LEFT (west) to reach science_3's column from copper_furnace_3's, which is
+# further east. See turn-right-from-south.function.yaml for the full
+# rationale on why belts are routed through 1x1 waypoints like this at all.
+kind: function
+name: turn_left_from_south
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: west
+ports:
+  in: { side: north, offset: { x: 0, y: 0 }, direction: south, kind: belt, item: copper-plate }
+  out: { side: west, offset: { x: 0, y: 0 }, direction: west, kind: belt, item: copper-plate }

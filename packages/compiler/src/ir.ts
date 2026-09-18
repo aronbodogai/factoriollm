@@ -21,6 +21,7 @@ export interface IREntity {
   direction?: Direction;
   recipe?: string;
   infinityFilter?: InfinityFilter;
+  type?: "input" | "output"; // underground-belt/underground-pipe only
 }
 
 export type PortKind = "belt" | "pipe" | "wire";

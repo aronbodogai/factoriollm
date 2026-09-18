@@ -1,0 +1,75 @@
+# Line 2 of 4 - bridge chunk 3/4 (of the revised, 4-file final leg).
+#
+# FOURTH revision. The third revision (crossing under the foreign belt "bus"
+# at x=51..89+,y=-50 with an underground-belt pair) placed correctly per
+# `plan`/`apply`, but never actually functioned: both underground-belt ends
+# came out live as type=input (confirmed via `entity.belt_to_ground_type`),
+# because mod/factoriollm.lua's `do_create` never forwarded the new `type`
+# field to `surface.create_entity` in the copy this server actually runs.
+# That copy lives OUTSIDE this worktree (symlinked from
+# /home/ideku/fb/instance/mods/factoriollm to the MAIN repo checkout's mod/,
+# not this worktree's) - editing it was correctly refused by this session's
+# permission system as a cross-worktree shared-resource edit, and
+# `entity.rotate()` does not toggle belt_to_ground_type via the scripting
+# API either (confirmed live - it "succeeds" but leaves the type
+# unchanged). So underground belts are off the table until someone with
+# access to the main checkout patches that file.
+#
+# This revision crosses the same single blocked tile (62,-50) with
+# inserter-crossing-south.function.yaml instead - a long-handed-inserter 1
+# tile south of the gap, reaching 2 tiles each way to skip clean over it.
+# See that function's own comments for the full geometry. It needs its own
+# power, wired in via a relay pole (crossing_relay) chained back to
+# iron_gear_2's own pole (64,-33) in science-line-2-iron.spec.yaml - both
+# hops are within wire_reach (9): iron_gear_2's pole -> (63,-41) -> the
+# crossing's own pole, ~8 tiles each.
+#
+# Route otherwise unchanged from the third revision: picks up from bridge-b
+# at (62,-51), skips (62,-50), continues south to y=-40, turns west
+# (turn_left_from_south), runs to x=45, turns south (turn_down_from_west),
+# and continues to y=-33 - handing off (cross-file physical adjacency) to
+# science-line-2-bridge-d.spec.yaml, which turns back east and rejoins
+# x=62 south of iron_gear_2's footprint.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment.function.yaml
+  - turn-left-from-south.function.yaml
+  - turn-down-from-west.function.yaml
+  - inserter-crossing-south.function.yaml
+  - single-pole.function.yaml
+instances:
+  - id: bridge2_c_xing
+    function: inserter_crossing_south
+    position: { x: 62, y: -51 } # belt at (62,-51) [in port], inserter at (62,-49), pole at (63,-49)
+  # bridge2_c1v3 (not v2, not repositioned onto the same localId - see
+  # science-line-2-bridge-c.spec.yaml's git history / the earlier
+  # bridge2_c1->bridge2_c1v2 rename note for why a fresh id is used whenever
+  # an instance's position shifts onto ground an OLDER same-family instance
+  # used to occupy): starts at y=-47, the inserter's drop tile (2 tiles
+  # south of the inserter at -49) - placed by plain physical adjacency, no
+  # `connections:` entry, since inserter_crossing_south has no "out" port
+  # (the drop tile isn't part of that function's own footprint).
+  - id: bridge2_c1v3
+    function: belt_segment
+    position: { x: 62, y: -47 }
+    params: { length: 7 } # covers y=-47..-41, matching bridge2_c_turn1 at y=-40 unchanged
+  - id: bridge2_c_turn1
+    function: turn_left_from_south
+    position: { x: 62, y: -40 }
+  - id: bridge2_c_turn2
+    function: turn_down_from_west
+    position: { x: 45, y: -40 }
+  - id: bridge2_c2
+    function: belt_segment
+    position: { x: 45, y: -39 }
+    params: { length: 7 } # covers y=-39..-33, hands off to bridge-d at (45,-32)
+  - id: crossing_relay
+    function: single_pole
+    position: { x: 63, y: -41 } # bridges iron_gear_2's pole (64,-33) to the crossing's pole (63,-49)
+connections:
+  - { from: bridge2_c1v3.out, to: bridge2_c_turn1.in, kind: belt }
+  - { from: bridge2_c_turn1.out, to: bridge2_c_turn2.in, kind: belt }
+  - { from: bridge2_c_turn2.out, to: bridge2_c2.in, kind: belt }

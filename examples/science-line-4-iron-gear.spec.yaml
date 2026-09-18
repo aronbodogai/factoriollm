@@ -1,0 +1,47 @@
+# Line 4 of 4 - iron half, part 2: bridge belt -> gear_assembler_wired ->
+# own solar power. See science-line-4-iron.spec.yaml for why this is split
+# from the drill/furnace part (54-entity combined plan, over the ~50/apply
+# ceiling).
+#
+# belt_run_south(5) physically bridges from iron_furnace_4.out (82,-21,
+# built in the other file) down to iron_gear_4.in (82,-15) -- five tiles,
+# placed at the exact adjacent absolute position so Factorio's own belt
+# auto-linking joins the two applies with no symbolic connection (per the
+# FILE CONVENTION note: connections: can only resolve ports declared in the
+# SAME spec file).
+#
+# gear_assembler_wired (not the stock gear-assembler.function.yaml) is used
+# since its `out` feeds a REAL downstream consumer (science_4, in
+# science-line-4-science.spec.yaml) -- the stock function's built-in void
+# sink would compete with that real connection for the same belt tile.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-run-south.function.yaml
+  - gear-assembler-wired.function.yaml
+  - solar-row.function.yaml
+  - single-pole.function.yaml
+instances:
+  # in tile (82,-20) = directly south of iron_furnace_4.out (82,-21).
+  - id: iron_bridge_4
+    function: belt_run_south
+    position: { x: 82, y: -20 }
+    params: { length: 5 }
+  # gear_4.in must share x=82 for a straight (same-direction, south)
+  # connection from the bridge's out tile (82,-16).
+  - id: iron_gear_4
+    function: gear_assembler_wired
+    position: { x: 82, y: -16 }
+  - id: solar_4
+    function: solar_row
+    position: { x: 91, y: -20 }
+    params: { count: 5 }
+  - id: relay_4b
+    function: single_pole
+    position: { x: 79, y: -18 }
+connections:
+  - { from: iron_bridge_4.out, to: iron_gear_4.in, kind: belt }
+# iron_gear_4.out lands at (82+6, -16+1) = (88,-15), direction south -- fed
+# into science_4.in_gear in science-line-4-science.spec.yaml.

@@ -1,0 +1,64 @@
+# Line 1 of 4: copper half + science_assembler. real_drills (copper-ore) ->
+# furnace_row(1) -> science_assembler.in_copper (straight south connection,
+# same file). science_assembler.in_gear is fed separately by the long
+# iron->copper bridge (science-line-1-bridge-*.spec.yaml, cross-file via
+# exact absolute-position adjacency — see that file's own header comment).
+#
+# The whole map's ONLY copper-ore patch (34,-119)-(56,-96) is shared by all
+# 4 lines. Positions here were found via live find_entities_filtered
+# sweeps, not the coordinator's original hint (which was already partly
+# claimed by 2 other lines by the time this line started building — see
+# science-line-1-iron.spec.yaml's header for the same story on the iron
+# side). Also: line 1's science_assembler needed to sit clear of x~51 and
+# x~62, both confirmed live as OTHER lines' own iron<->copper bridge
+# columns (continuous transport-belt runs many tiles long) — and clear of
+# another line's electric-furnace @ 48.5,-93.5 sitting in the initial
+# candidate spot. First apply attempt (drill @ 34,-107 / furnace @ 38,-102
+# / science @ 44,-93) failed 6 of its ~44 creates with "overlapping an
+# existing entity" for exactly these reasons; positions below are the
+# corrected ones, re-verified clear immediately before this apply.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - furnace-row.function.yaml
+  - science-assembler.function.yaml
+  - solar-row.function.yaml
+  - single-pole.function.yaml
+instances:
+  - id: copper_drill_1
+    resource: copper-ore
+    resource_mode: real_drills
+    position: { x: 36, y: -107 }
+    # right/bottom = left/top + 6 (not +7) — see science-line-1-iron.spec.yaml's
+    # bounding_box comment for why +7 places 4 drills instead of 1.
+    # left shifted from 34 to 36: a 3x3-footprint solar-panel belonging to
+    # another line, centered @ 33.5,-106.5, actually spans x32-35 — enough
+    # to overlap a drill anchored at x=34 despite looking clear of the
+    # bbox's own left edge at a glance.
+    bounding_box: { left: 36, top: -107, right: 42, bottom: -101 }
+  # Synthesized out port = anchor + (3,1) = (39,-106), direction east.
+  - id: copper_furnace_1
+    function: furnace_row
+    # x=47 (not 38): out.x=53 clears both other-line bridge columns (~51,
+    # ~62) and the other line's furnace @ 48.5,-93.5.
+    position: { x: 47, y: -102 }
+    params: { count: 1 }
+  - id: copper_drill_pole_1
+    function: single_pole
+    position: { x: 41, y: -107 }
+  - id: copper_solar_1
+    function: solar_row
+    position: { x: 20, y: -99 }
+    params: { count: 5 }
+  # science_1.anchor.x MUST equal copper_furnace_1.out.x (53): in_copper's
+  # direction is fixed "south" (same as furnace.out), so only a straight
+  # connection is possible (both ends vertical — no L-bend perpendicular
+  # pair exists).
+  - id: science_1
+    function: science_assembler
+    position: { x: 53, y: -93 }
+connections:
+  - { from: copper_drill_1.out, to: copper_furnace_1.in, kind: belt }
+  - { from: copper_furnace_1.out, to: science_1.in_copper, kind: belt }

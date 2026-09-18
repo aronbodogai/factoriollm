@@ -1,0 +1,97 @@
+# Line 4 of 4 - copper half: real drill -> furnace_row(1), own local solar
+# power. Copper ore patch bbox (34,-119)-(56,-96) per the coordinator's live
+# scan; chain 1's own file comments reserved {34,-111,40,-105} for chain 4
+# ("clear of chain 4's box") -- confirmed live this session (35 copper-ore
+# tiles via find_entities_filtered, matches chain1/2/3's neighboring
+# density). Two decorative tree-08 (50.8125,-95.5) and (44.1875,-92.125)
+# near the furnace footprint were destroyed via RCON before this apply
+# (pre-approved: decorative trees blocking placement).
+#
+# Drill port math (packages/compiler/src/drillPlacer.ts, fixed this
+# session): out = anchor + (3,1), direction east. copper_drill_4 anchor
+# (34,-111) -> out (37,-110).
+#
+# Furnace placed east+south of the drill's out port -- an L-bend (east ->
+# south) connects them, both legs confirmed clear via RCON before applying.
+#
+# ROOT-CAUSE FIX (session: red-spm-infinity-chests, round 2): live RCON
+# confirmed this line's own belt column at x=45.5 physically collides with
+# science-line-1-copper-science.spec.yaml's drill1->furnace1 horizontal leg,
+# which independently also runs through (45.5,-105.5)/(46.5,-105.5) on its
+# way to its own corner at (47.5,-105.5). Only one belt entity can occupy a
+# tile: whichever spec applied later physically overwrote the other's tile.
+# Live state showed line 1's east-facing belt sitting on (45.5,-105.5)
+# where this line's south-facing belt used to be (this line's OWN state.json
+# still thought it owned that tile - state drift from the collision, not
+# from any external raw-RCON edit). Result: ore mined by copper_drill_4
+# flowed south down to y=-106.5, then got side-loaded onto line 1's
+# perpendicular belt at the collision tile instead of continuing south -
+# 100% of this line's copper diverted into line 1's chain, and
+# copper_furnace_4 sat permanently at "no_ingredients" (confirmed live:
+# both its inserters read "waiting_for_source_items", one item-on-ground
+# copper-plate spilled at (47.5,-90.3) from the furnace_row's own earlier
+# stock draining dry). Line 1 itself is currently healthy (furnace
+# "working", products_finished climbing) and must NOT be touched.
+#
+# Per this project's hard rule (drillPlacer.ts ~line 87-94): never let two
+# lines' belts share/cross the same tile. Since line 1's horizontal run
+# occupies the ENTIRE row y=-105.5 across x=40.5..47.5 (its own designed
+# route, already working, left untouched), this line's vertical column at
+# x=45.5 cannot cross that row on the surface at all. Fixed by threading a
+# 1-tile underground-belt hop (underground-crossing-south.function.yaml,
+# already used elsewhere in this project for exactly this kind of
+# unavoidable cross-line belt collision) UNDER line 1's belt: input at
+# (45,-107) [world tile (45.5,-106.5), still this line's own, untouched by
+# line 1], skips (45.5,-105.5) [line 1's tile, never touched], output at
+# (45,-105) [world tile (45.5,-104.5), also this line's own]. The
+# drill->furnace connection is now two hops (drill.out->crossing.in,
+# crossing.out->furnace.in) instead of one straight L-bend, split exactly
+# at the crossing.
+#
+# Rebuilt via destroy (old state) + apply (this file) so the whole chain's
+# entities/positions are identical to before except for the 1-tile
+# crossing swapped in at the collision point.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - furnace-row.function.yaml
+  - solar-row.function.yaml
+  - single-pole.function.yaml
+  - underground-crossing-south.function.yaml
+instances:
+  - id: copper_drill_4
+    resource: copper-ore
+    resource_mode: real_drills
+    position: { x: 34, y: -111 }
+    bounding_box: { left: 34, top: -111, right: 40, bottom: -105 }
+  - id: copper_crossing_4
+    function: underground_crossing_south
+    position: { x: 45, y: -107 }
+  - id: copper_furnace_4
+    function: furnace_row
+    position: { x: 45, y: -95 }
+    params: { count: 1 }
+  - id: copper_drill_4_pole
+    function: single_pole
+    position: { x: 37, y: -113 }
+  - id: copper_relay_4a
+    function: single_pole
+    position: { x: 42, y: -108 }
+  - id: copper_relay_4b
+    function: single_pole
+    position: { x: 42, y: -98 }
+  - id: copper_solar_4
+    function: solar_row
+    position: { x: 20, y: -108 }
+    params: { count: 5 }
+  - id: copper_relay_4c
+    function: single_pole
+    position: { x: 30, y: -104 }
+connections:
+  - { from: copper_drill_4.out, to: copper_crossing_4.in, kind: belt }
+  - { from: copper_crossing_4.out, to: copper_furnace_4.in, kind: belt }
+# copper_furnace_4.out lands at (45+6, -95+1) = (51,-94), direction south --
+# picked up by the long-haul bridge in science-line-4-copper-bridge*.spec.yaml
+# files, en route to science_4.in_copper.

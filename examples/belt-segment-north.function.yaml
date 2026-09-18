@@ -1,0 +1,28 @@
+# Vertical mirror of belt-segment.function.yaml (which only goes south) — a
+# straight run of `length` belt tiles moving north. Line 1's copper patch
+# sits north of its iron patch (more negative y), so the long bridge
+# connecting them runs north, in chunks kept under the ~50-entity-per-file
+# apply limit (see science-line-1-bridge-*.spec.yaml).
+kind: function
+name: belt_segment_north
+params:
+  length: { type: int, default: 4 }
+size: { width: 1, height: "${length}" }
+entities:
+  - repeat: "${length}"
+    name: transport-belt
+    position: { x: 0, y: "${-i}" }
+    direction: north
+ports:
+  in:
+    side: south
+    offset: { x: 0, y: 0 }
+    direction: north
+    kind: belt
+    item: iron-gear-wheel
+  out:
+    side: north
+    offset: { x: 0, y: "${-(length - 1)}" }
+    direction: north
+    kind: belt
+    item: iron-gear-wheel

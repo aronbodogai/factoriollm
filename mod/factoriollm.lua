@@ -59,6 +59,9 @@ local function do_create(surface, entity_spec)
     position = entity_spec.position,
     direction = entity_spec.direction or 0,
     force = "player",
+    -- underground-belt/underground-pipe only ("input"/"output"); nil is
+    -- fine for every other entity type.
+    type = entity_spec.type,
   }
 
   if not surface.can_place_entity(params) then

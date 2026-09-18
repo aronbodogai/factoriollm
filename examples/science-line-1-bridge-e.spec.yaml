@@ -1,0 +1,38 @@
+# Line 1's iron->copper bridge, part 5 of 6 (REVISED a 3rd time): the long
+# westward run back from the x=115 corridor toward science_1's column, at
+# y=-96 (touches bridge4_tl.out @ (115,-96) by exact position, cross-file).
+#
+# REVISION 3: the obstructing tile at x=80 turned out to be a single
+# isolated tile (confirmed live: x=79 and x=81 both placed fine, only
+# x=80 itself failed) — too narrow for a chest+2-regular-inserters bridge
+# (the chest itself still needs to sit somewhere, and every candidate spot
+# within a regular inserter's 1-tile reach of both flanking belts is
+# x=80 itself). A single long-handed-inserter (2-tile reach) at x=81
+# picks straight off bridge5_west1a's belt at x=83 and drops straight onto
+# bridge5_west1b's belt at x=79, skipping x=80 entirely without any
+# entity ever occupying it. See long-inserter-hop-west.function.yaml and
+# this file's git history for the underground-belt and chest attempts
+# that didn't pan out.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment-west.function.yaml
+  - long-inserter-hop-west.function.yaml
+instances:
+  - id: bridge5_west1a
+    function: belt_segment_west
+    position: { x: 83, y: -96 }
+    params: { length: 32 }
+  - id: bridge5_hop
+    function: long_inserter_hop_west
+    position: { x: 81, y: -96 }
+  # Extended to length 14 (was 12): now needs its `in` end at x=79 (2 west
+  # of the hop inserter) instead of x=77, since the inserter itself
+  # occupies x=81, not a belt tile at x=80/79.
+  - id: bridge5_west1b
+    function: belt_segment_west
+    position: { x: 66, y: -96 }
+    params: { length: 14 }
+connections: []

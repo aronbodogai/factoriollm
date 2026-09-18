@@ -1,0 +1,29 @@
+# Copper long-haul bridge, segment 1 of 6. copper_furnace_3.out (80,-115,
+# south) is ~98 tiles north of the jog point at (80,-16) where the route
+# turns west toward science_3 (see science-line-3-bridge-6.spec.yaml and
+# science-line-3-science.spec.yaml for why: both science_assembler ports
+# need SOUTH-facing arrival, same-direction pairs can only connect straight,
+# and science_3 landed at x=54 - far enough west of copper_furnace_3's
+# column (x=80) that only a purpose-built westward elbow, added this
+# session as turn-left-from-south/turn-down-from-west.function.yaml, can
+# bridge it - this project only shipped rightward elbows otherwise).
+#
+# Split into 6 files/applies (~20-25 belts each) to stay comfortably under
+# the ~50-entity-per-apply ceiling documented in the task brief's FILE
+# CONVENTION note. Each file's first belt sits one tile past the previous
+# file's (or copper_furnace_3's own) last belt, same direction - Factorio
+# auto-links adjacent same-direction belts, no cross-file `connections:`
+# needed (connect.ts only resolves ports declared in the SAME file).
+#
+# in tile (80,-114) = directly south of copper_furnace_3.out (80,-115).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment.function.yaml
+instances:
+  - id: bridge3_1
+    function: belt_segment
+    position: { x: 80, y: -114 }
+    params: { length: 20 }

@@ -1,0 +1,19 @@
+# Line 2 of 4 - bridge chunk 1/3 of the long copper-furnace -> science_2
+# belt run. Picks up immediately south of science-line-2-copper.spec.yaml's
+# bridge2_turnC (its "out" tile is at (62,-108) facing south) via plain
+# physical adjacency - this instance's first belt tile is (62,-107), the
+# very next tile south, same direction, so Factorio auto-links them with no
+# `connections:` entry (which couldn't cross files anyway; see
+# science-line-2-copper.spec.yaml's notes). Covers y=-107..-80 (28 tiles),
+# continued by bridge-b.spec.yaml at y=-79.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment.function.yaml
+instances:
+  - id: bridge2_a
+    function: belt_segment
+    position: { x: 62, y: -107 }
+    params: { length: 28 }

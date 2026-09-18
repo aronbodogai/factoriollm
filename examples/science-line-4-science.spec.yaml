@@ -1,0 +1,96 @@
+# Line 4 - final assembly: science_assembler (already wired to its own
+# built-in "at-most 0" void-sink infinity-chest -- see
+# science-assembler.function.yaml, untouched) fed by:
+#   - in_gear <- iron_gear_4.out (science-line-4-iron-gear.spec.yaml), via a
+#     short 4-tile belt_run_south bridge, physically adjacent to both ends.
+#   - in_copper <- the copper long-haul bridge's last leg
+#     (science-line-4-copper-bridge-3.spec.yaml), via a 4-turn detour
+#     (copper_turn_4c/d/e/f/g/h below).
+#
+# WHY THE DETOUR: the first attempt (copper_turn_4c direct L-bend west then
+# south into science_4.in_copper) failed live -- `apply` reported
+# "cannot place transport-belt" for every tile at x=87,88,89,y=-8. Column
+# x=88 turned out to be walled off almost entirely between y=-16 (gear's
+# top edge) and y=-5 (the assembler's bottom edge): science_4's own
+# in_gear belt/inserter sit there, iron_bridge_4_science's belt run sits
+# there, AND science_4's own assembling-machine-3 (3x3, local x=[2,5)
+# relative to science_4 => absolute x=[87,90)) blocks x=87-89 at y=-8 too --
+# there is no row between -16 and -5 where that column is clear. The fix
+# dips the copper belt south of BOTH machines (science_4's bbox ends at
+# y=-4) where a full row was confirmed clear live, crosses west outside
+# gear's own x-range (gear is x=[82,89), so x=84 stays just clear of its
+# 3x3 assembler at local x=[2,5)=abs[84,87) -- wait, x=84 IS inside that
+# range at y=-16..-13, but the climb back north here only runs from y=-8 to
+# y=-3, well south of gear's bbox entirely), then climbs back up outside
+# both machines and enters in_copper from directly north, as its `south`
+# direction requires. All four new elbow tiles' straight-run legs were
+# confirmed clear live before applying (see the corridor checks referenced
+# in science-line-4-copper-bridge-1.spec.yaml's routing-rationale comment
+# for the general methodology used throughout this line).
+#
+# science_4 kept at the originally-planned (85,-10): iron_gear_4.out is at
+# x=88 (=82+6), so in_gear (offset x=3) lines up with science.x=85 for a
+# straight connection with zero manual bridging math beyond the 4-tile
+# vertical gap.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - turn-left-from-south.function.yaml
+  - turn-down-from-west.function.yaml
+  - turn-up-from-west.function.yaml
+  - turn-right-from-north.function.yaml
+  - turn-down-from-east.function.yaml
+  - belt-run-south.function.yaml
+  - science-assembler.function.yaml
+instances:
+  # in tile (110,-8) = directly south of copper_bridge_4_3.out (110,-9).
+  - id: copper_turn_4c
+    function: turn_left_from_south
+    position: { x: 110, y: -8 }
+  # directly west of copper_turn_4c.out (straight, 0 gap).
+  - id: copper_turn_4d
+    function: turn_down_from_west
+    position: { x: 109, y: -8 }
+  # 5 rows south of copper_turn_4d, at the confirmed-clear row south of
+  # both gear_assembler_wired and science_4's own bboxes.
+  - id: copper_turn_4e
+    function: turn_left_from_south
+    position: { x: 109, y: -3 }
+  # 25 columns west of copper_turn_4e, just west of gear_assembler_wired's
+  # own bbox (x=[82,89)) and science_4's assembler footprint (x=[87,90)).
+  - id: copper_turn_4f
+    function: turn_up_from_west
+    position: { x: 84, y: -3 }
+  # 5 rows north of copper_turn_4f, back up to the same row as the corner
+  # this line originally aimed for.
+  - id: copper_turn_4g
+    function: turn_right_from_north
+    position: { x: 84, y: -8 }
+  # 1 column east of copper_turn_4g (straight, 0 gap).
+  - id: copper_turn_4h
+    function: turn_down_from_east
+    position: { x: 85, y: -8 }
+  # in tile (88,-14) = directly south of iron_gear_4.out (88,-15).
+  # length 4 (not 5): a length-5 run's out tile would land at (88,-10),
+  # exactly ON TOP of science_4.in_gear's own tile (degenerate 0-length
+  # connection, confirmed by the compiler's UNROUTABLE_CONNECTION error
+  # during planning) -- length 4 stops one tile short at (88,-11), leaving
+  # (88,-10) for science_4's own belt.
+  - id: iron_bridge_4_science
+    function: belt_run_south
+    position: { x: 88, y: -14 }
+    params: { length: 4 }
+  - id: science_4
+    function: science_assembler
+    position: { x: 85, y: -10 }
+connections:
+  - { from: copper_turn_4c.out, to: copper_turn_4d.in, kind: belt }
+  - { from: copper_turn_4d.out, to: copper_turn_4e.in, kind: belt }
+  - { from: copper_turn_4e.out, to: copper_turn_4f.in, kind: belt }
+  - { from: copper_turn_4f.out, to: copper_turn_4g.in, kind: belt }
+  - { from: copper_turn_4g.out, to: copper_turn_4h.in, kind: belt }
+  # turnH.out faces south, directly adjacent (0 gap) to science_4.in_copper.
+  - { from: copper_turn_4h.out, to: science_4.in_copper, kind: belt }
+  - { from: iron_bridge_4_science.out, to: science_4.in_gear, kind: belt }

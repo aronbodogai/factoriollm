@@ -1,0 +1,25 @@
+# Extra solar capacity for line 1's copper+science cluster — same issue as
+# science-line-1-iron-solar-extra.spec.yaml: one solar_row(5) (300kW peak)
+# is short of the combined peak draw of electric-mining-drill +
+# electric-furnace + assembling-machine-3 (science) + their inserters
+# (roughly 550-600kW). Confirmed live: science_1's assembling-machine-3
+# and copper_furnace_1's inserters intermittently reported status
+# "no_power" (54) even at near-peak daytime. Adding 2 more solar_row(5)
+# north of copper_solar_1, wired in by proximity (each row's poles are
+# within wire_reach (9) of the next).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - solar-row.function.yaml
+instances:
+  - id: copper_solar_2
+    function: solar_row
+    position: { x: 20, y: -94 }
+    params: { count: 5 }
+  - id: copper_solar_3
+    function: solar_row
+    position: { x: 20, y: -89 }
+    params: { count: 5 }
+connections: []

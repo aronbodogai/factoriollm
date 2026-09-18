@@ -1,0 +1,56 @@
+# Small 1x1 "elbow" waypoints for routing a belt connection around obstacles
+# that block a single straight-or-single-L-bend run (this project's format
+# only supports one bend per `connections:` entry — see docs/FORMAT.md).
+# Chaining `connections:` through several of these lets each individual hop
+# stay a valid straight/L-bend while the overall path zigzags. Belts
+# auto-curve from whatever neighbor feeds them, so the entity itself is
+# just one transport-belt facing its OUTPUT direction; the "in" port's
+# `direction` records the direction items are moving when they arrive
+# (i.e. the incoming leg's own direction), not the tile's belt orientation.
+kind: function
+name: turn_right_from_south
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: east
+ports:
+  in: { side: north, offset: { x: 0, y: 0 }, direction: south, kind: belt, item: copper-ore }
+  out: { side: east, offset: { x: 0, y: 0 }, direction: east, kind: belt, item: copper-ore }
+---
+kind: function
+name: turn_right_from_north
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: east
+ports:
+  in: { side: south, offset: { x: 0, y: 0 }, direction: north, kind: belt, item: copper-ore }
+  out: { side: east, offset: { x: 0, y: 0 }, direction: east, kind: belt, item: copper-ore }
+---
+kind: function
+name: turn_down_from_east
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: south
+ports:
+  in: { side: west, offset: { x: 0, y: 0 }, direction: east, kind: belt, item: copper-ore }
+  out: { side: south, offset: { x: 0, y: 0 }, direction: south, kind: belt, item: copper-ore }
+---
+kind: function
+name: turn_up_from_east
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: north
+ports:
+  in: { side: west, offset: { x: 0, y: 0 }, direction: east, kind: belt, item: copper-ore }
+  out: { side: north, offset: { x: 0, y: 0 }, direction: north, kind: belt, item: copper-ore }

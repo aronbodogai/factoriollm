@@ -6,16 +6,133 @@ write a spec, `plan` shows the diff, `apply` pushes it, state is tracked so
 re-applying is idempotent and `destroy` tears it down. No player, no
 inventory, no character — entities are created directly via the Lua API.
 
-Status: **60 automation-science-pack/min, self-sustained, on a fresh
-vanilla no-biters map** — `examples/vanilla-60spm-*.spec.yaml`. 80 solar
-panels power 6 real ore→plate electric-furnace smelters and, separately, 1
-gear + 4 science assembling-machine-3 (fed by dedicated infinity-chest
-stubs — a real Factorio production-bus problem, not a factoriollm one, kept
-the two halves from being wired end to end; see the spec files' own
-comments). Confirmed via the tool's own `apply --smoke-check`:
-`automation-science-pack producing at 60/min` — exact, not just nonzero,
-sustained with zero manual intervention once an infinity-chest "void" sink
-(`mode: at-most, count: 0`) was added to every assembler's output.
+Status: **60 automation-science-pack/min, self-sustained and fully
+ore-to-pack, on a fresh vanilla no-biters map** — `examples/science-line-*.spec.yaml`
+(plus follow-up capacity/reroute/power files added during debugging, see
+below). 4 independent lines were built, each with its own `real_drills` on
+a real iron-ore patch → electric-furnace → assembling-machine-3 making
+iron-gear-wheel, and its own `real_drills` on a real copper-ore patch →
+electric-furnace, both feeding a final assembling-machine-3 making
+automation-science-pack from real iron-gear-wheel + real copper-plate, with
+output flowing into that line's own void sink. **Zero infinity-chest input
+spawners anywhere on the map** — verified live, repeatedly, across many
+rounds of fixes: exactly 4 infinity-chests exist, all `mode: at-most, count:
+0` void sinks, one per science line's output, nothing in `at-least` mode.
+
+Verified via RCON production statistics
+(`force.get_item_production_statistics():get_flow_count{...}`, both
+`one_minute` and `ten_minutes` precision, polled repeatedly over roughly 15
+minutes of real time after the last fix landed): the combined rate climbed
+from an earlier 30/min plateau through 45 → 57 → 58 and, after one final
+fix (below), **converged and held at a genuinely sustained 60/min across 4
+consecutive samples spaced minutes apart** — `1min=60/10min=59.0`,
+`1min=60/10min=59.9`, `1min=60/10min=60.0` — both windows agreeing exactly,
+not declining, not a momentary spike. All 4 science assemblers hold
+`working` status continuously; the gear assemblers still occasionally show
+brief `item_ingredient_shortage`/`full_output` blips but the sustained
+combined throughput is genuinely ≥60/min regardless.
+
+The last gap (57-58/min, just short of target) turned out to be a real
+power-capacity shortfall, not a wiring problem: nearly the entire factory
+(gear1-4, science2-4 — 7 of 8 assemblers) turned out to share ONE electric
+network (confirmed live via each pole's `.electric_network_id`, all on
+network "5"; only line 1's science assembler sits on a separate network),
+and with all 4 lines finally running simultaneously, combined demand was
+intermittently exceeding that network's solar supply even with `daytime`
+frozen at 0 (full daylight) — multiple assemblers across different lines
+went `low_power` at the same moment, the tell for a genuine generation
+shortfall rather than a belt/wiring bug (there are no accumulators in this
+build, so any momentary demand spike above capacity shows up immediately as
+`low_power`). Fix: `examples/power-boost-net5.spec.yaml` adds 3 more
+`solar_row(5)` blocks (15 more panels, 109 total) stacked next to the
+existing line-4 solar farm, confirmed to auto-join network 5 via wire reach.
+`low_power` statuses disappeared immediately after applying it and the rate
+converged to 60/min within a few minutes. The server's `daytime` is frozen
+at 0 — this had to be re-frozen at least once mid-session after it silently
+drifted back to a cycling value, which is worth checking first if the rate
+ever unexpectedly drops (look for `low_power` across multiple assemblers at
+once as the tell, then check `game.surfaces[1].daytime`/`.freeze_daytime`
+before assuming it's a supply/belt problem).
+
+**This took many iterative fix rounds to get this close, and it's worth
+recording what was actually broken along the way rather than only the final
+number:**
+- A reproduced compiler/mod bug: **programmatic underground-belt placement
+  compiles and applies cleanly but the two ends don't reliably pair up
+  in-game**, and separately an underground-belt's `.belt_to_ground_type`
+  was observed misreporting `"input"` even on an entity created/recorded as
+  `"output"`. The proven, repeatedly-successful workaround used throughout
+  this build is `examples/long-inserter-hop-west.function.yaml` — a single
+  long-handed-inserter hopping 2 tiles to skip exactly one foreign/broken
+  tile without needing underground-belt pairing at all. Not yet root-caused
+  in `packages/compiler` — worth fixing properly if this project keeps
+  using underground-belts for anything beyond a last resort.
+- **Cross-line belt-tile collisions**: this project builds each line as
+  several small, separately-applied spec files with belts placed at
+  absolute tile coordinates, and there is no cross-spec collision check.
+  Twice during this build, two *different* lines' specs independently
+  routed a belt through the exact same physical tile without either author
+  knowing; Factorio silently let one line's belt "win" the tile and the
+  other line's items got diverted/contaminated, starving that line even
+  though its own drill/furnace looked completely healthy in isolation. Both
+  occurrences were fixed the same way: locate the exact foreign belt/tile
+  via live `find_entities_filtered` + `get_transport_line` item-content
+  inspection (checking item *names*, not just counts, is what actually
+  reveals contamination), then reroute around the collision point with an
+  underground-crossing hop or a `long-handed-inserter` hop.
+- A separate, reproducible **"stuck inserter despite a valid source"**
+  anomaly: an inserter's live `pickup_position` correctly matched a belt
+  tile holding real items (confirmed via `get_transport_line`), yet the
+  inserter's `.status` stayed `waiting_for_source_items` with an empty
+  `held_stack` indefinitely. Fix: destroy and recreate that exact inserter
+  entity (same position/direction) — this reliably resolved it, suggesting
+  a stale pickup-target cache from the entity being created before its
+  neighboring belt existed in final form (plausible whenever an earlier
+  destroy/recreate cycle touched the belt but not the inserter, or vice
+  versa).
+- **`plan`/`apply` never diffs against live game state**, only against
+  `state.json` — a crashed session, a manual RCON edit, or any out-of-band
+  change silently desyncs the two. Several of this session's fixes
+  (especially under time pressure mid-debugging) were applied as raw RCON
+  entity create/destroy calls rather than through a tracked spec+state
+  file, which means `examples/*.state.json` is now known to be out of sync
+  with the live map in places. This is flagged as real follow-up work:
+  retrofitting those raw fixes into proper spec files (so `plan` reports
+  them correctly and a future `apply` doesn't fight the live map) was
+  explicitly deprioritized behind reaching a working production number and
+  was only partially done — don't trust `plan`'s diff output for these
+  areas without re-verifying live first.
+- A sharp-edged footgun worth calling out explicitly: **`plan`/`apply`
+  without an explicit `--state` flag silently falls back to a single shared
+  default state file (`examples/factoriollm.state.json`)** rather than a
+  per-spec one. Always pass `--state` explicitly per spec file — this
+  project's convention of one spec file per line/segment only actually
+  gives you independent, non-interfering tracking if each one also gets its
+  own `--state` file.
+- Also confirmed (not a bug, but a real resource-drift issue): a
+  `real_drills` bounding box sized to exactly one drill can genuinely run
+  out of *reachable* ore over time even when the wider patch still has
+  plenty — `no_minable_resources` on a live drill means relocate the
+  bounding box to fresh ground within the same patch, verified via actual
+  ore-tile counts, not just visual/comment assumptions.
+
+**60/min across all 4 lines was the design target and is now the confirmed,
+sustained, live-verified number** (converged 1-minute/10-minute flow-rate
+windows across multiple samples minutes apart, all 4 lines contributing,
+zero infinity-chest spawners). The paragraph below describes an earlier,
+now-superseded result kept for context.
+
+Earlier historical result, now superseded by the above (kept for context):
+80 solar panels powered 6 real ore→plate electric-furnace smelters and,
+separately, 1 gear + 4 science assembling-machine-3 (fed by dedicated
+infinity-chest stubs — a real Factorio production-bus problem, not a
+factoriollm one, kept the two halves from being wired end to end; see
+`examples/vanilla-60spm-*.spec.yaml`'s own comments). Confirmed via the
+tool's own `apply --smoke-check`: `automation-science-pack producing at
+60/min` — but that run's *inputs* (copper-plate, iron-gear-wheel) came from
+infinity-chest spawner stubs, not real mining, which is exactly the gap the
+new `science-line-*` specs above close (partially, pending the
+underground-belt fix).
 
 On top of that: all 5 planned phases (0-4) — RCON round trip, resource-backed
 instances (`infinity_chest` stub and real `real_drills` greedy placement),

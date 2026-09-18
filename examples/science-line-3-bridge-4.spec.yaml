@@ -1,0 +1,14 @@
+# Copper long-haul bridge, segment 4 of 6. See science-line-3-bridge-1.spec.yaml
+# for the full rationale. in tile (80,-54) = directly south of
+# science-line-3-bridge-3's last belt (80,-55).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment.function.yaml
+instances:
+  - id: bridge3_4
+    function: belt_segment
+    position: { x: 80, y: -54 }
+    params: { length: 20 }

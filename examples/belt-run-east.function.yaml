@@ -1,0 +1,25 @@
+# Straight run of `length` transport-belts flowing east. See
+# belt-run-south.function.yaml for the cross-file bridging rationale.
+kind: function
+name: belt_run_east
+params:
+  length: { type: int, default: 10 }
+size: { width: "${length}", height: 1 }
+entities:
+  - repeat: "${length}"
+    name: transport-belt
+    position: { x: "${i}", y: 0 }
+    direction: east
+ports:
+  in:
+    side: west
+    offset: { x: 0, y: 0 }
+    direction: east
+    kind: belt
+    item: copper-plate
+  out:
+    side: east
+    offset: { x: "${length - 1}", y: 0 }
+    direction: east
+    kind: belt
+    item: copper-plate

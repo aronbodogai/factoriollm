@@ -1,0 +1,13 @@
+# 1x1 "elbow" waypoint: absorbs an east-arriving belt run and re-emits it
+# north. See turn-right-from-south.function.yaml for the full rationale.
+kind: function
+name: turn_up_from_east
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: north
+ports:
+  in: { side: west, offset: { x: 0, y: 0 }, direction: east, kind: belt, item: copper-ore }
+  out: { side: north, offset: { x: 0, y: 0 }, direction: north, kind: belt, item: copper-ore }

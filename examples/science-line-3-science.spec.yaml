@@ -1,0 +1,42 @@
+# Line 3 of 4 - science_assembler + a plain belt bridge from iron_gear_3.out.
+#
+# DEVIATION from the original (80,-14) plan (see this file's git history if
+# needed): that spot and the whole gear-feed jog corridor east of the iron
+# cluster turned out to be already claimed by line 4's own
+# iron_gear_4/bridge and line 2's science_2/gear_2 (confirmed live via RCON
+# find_entities_filtered - real assembling-machine-3/infinity-chest/belt
+# entities, not decorations, repeatedly appearing in every east-side
+# candidate tried). science_3 was relocated to (54,-8): its x (54) makes
+# iron_gear_3.out.x (57) land exactly on in_gear's column (54+3=57) with NO
+# jog needed at all - the cheapest possible gear feed, and confirmed clear
+# of every other line's footprint down the whole column. This pushed the
+# COPPER feed's long jog west instead (copper_furnace_3.out.x=80 is far
+# east of x=54) - see science-line-3-bridge-6.spec.yaml for that route.
+#
+# iron_gear_3 is declared in science-line-3-iron.spec.yaml, a different
+# spec/state file, so `connections:` can't resolve iron_gear_3.out here
+# (connect.ts only resolves ports declared in the SAME file). gear_bridge_3
+# is instead placed at the exact absolute position one tile south of
+# iron_gear_3.out (57,-21) -> (57,-20), so Factorio's own belt auto-linking
+# joins the two applies (per the task brief's FILE CONVENTION note).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - science-assembler.function.yaml
+  - belt-segment.function.yaml
+instances:
+  - id: science_3
+    function: science_assembler
+    position: { x: 54, y: -8 }
+  # in tile (57,-20) = directly south of iron_gear_3.out (57,-21).
+  - id: gear_bridge_3
+    function: belt_segment
+    position: { x: 57, y: -20 }
+    params: { length: 12 }
+connections:
+  - { from: gear_bridge_3.out, to: science_3.in_gear, kind: belt }
+# science_3.in_copper is at (54,-5), direction south - fed from
+# science-line-3-bridge-6.spec.yaml's south_approach_3.out at (54,-6),
+# physically adjacent (no cross-file `connections:` possible).
