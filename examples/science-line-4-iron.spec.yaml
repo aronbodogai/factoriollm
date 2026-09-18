@@ -1,0 +1,107 @@
+# Line 4 of 4 - iron half, part 1: real drill -> furnace_row(1).
+# Split from the gear half (science-line-4-iron-gear.spec.yaml) because the
+# drill->furnace connection alone routes an L-bend of 23 belt tiles (drill's
+# real out port is only (3,1) from its bbox anchor, not near the furnace),
+# pushing the combined file to 54 entities -- over this project's documented
+# ~50/apply reliability ceiling (see the FILE CONVENTION note; a combined
+# plan was actually computed and counted at 54 before this split).
+#
+# Positions reused from the pre-crash iron-chain-4.spec.yaml probing (same
+# deterministic map seed), re-verified live in this session via
+# find_entities_filtered before building.
+#
+# Drill port math (packages/compiler/src/drillPlacer.ts, fixed this
+# session): out = anchor + (3,1), direction east.
+#
+# ROOT-CAUSE FIX (session: red-spm-infinity-chests, same pattern as
+# science-line-2-copper.spec.yaml's copper_drill_2 relocation): the
+# original anchor (65,-38) -- drill center (66.5,-36.5) -- went
+# no_minable_resources live. Confirmed via RCON that a mining drill's real
+# resource search is a CIRCLE of exactly `mining_drill_radius` (2.49) from
+# the drill's own center -- NOT footprint/2+radius as drillPlacer.ts's own
+# comment assumes, and NOT the full declared bounding_box square. Proof:
+# `surface.find_entities_filtered{position=drill.position,
+# radius=drill.prototype.mining_drill_radius, type="resource"}` returned 0
+# for the old drill even though ore tiles existed a few tiles further out
+# (closest one at distance 3.0, just outside the 2.49 circle) -- matching
+# the live status exactly.
+#
+# NOTE: an earlier (crashed) session's version of this comment proposed
+# bounding_box {69,-30,75,-24} (anchor (69,-30), claimed ~3833 ore). That
+# was NEVER applied to the instance below (the crash happened first) and,
+# re-checked live this session, does not hold up: the true ore patch's own
+# bounds are x:41.5..72.5, y:-37.5..-5.5 (measured live via
+# find_entities_filtered over a wide scan area), so a box starting at
+# x=69 barely clips the patch's eastern edge -- live count in that box was
+# only 7 ore tiles, 2 inside the true 2.49 mining circle. Redone from
+# scratch this session:
+#
+# Brute-forced every candidate anchor's true-circle ore coverage (radius
+# 2.49 from anchor+1.5,+1.5) against a live dump of every iron-ore entity
+# and every non-resource entity within (40,-60)-(100,-10). The richest
+# spots (anchor ~(55,-22..-34), full 21-tile circles) sit WEST of two
+# long-running live transport-belt columns at x=62.5 and x=65.5 --
+# confirmed these belong to science-line-2's copper bridge / gear->science_2
+# bridge (both CONFIRMED WORKING per this session's brief) and run the
+# entire north-south span between the ore patch and this line's furnace,
+# with no gap to route around and no reliable underground-belt crossing in
+# this codebase (create_entity always returns belt_to_ground_type "input"
+# for both ends -- see chest-crossing-west.function.yaml's header). Rather
+# than build a novel two-crossing bridge through another line's live
+# belts, picked the best ore spot EAST of both columns instead, needing
+# zero crossings: bounding_box {left:66,top:-33,right:72,bottom:-27}
+# (anchor (66,-33)), scoring the full 21-tile true-mining-circle (drill
+# center (67.5,-31.5)) -- verified live via
+# find_entities_filtered{position=..,radius=2.49,name="iron-ore"}.
+#
+# The box's only live obstruction was this line's OWN relay_4a pole
+# (sitting at its old position (71,-32), which the old east-then-south
+# route needed but this one doesn't) -- moved to (73,-31), 2.24 tiles from
+# an existing network-5 pole (well within medium-electric-pole's 9-tile
+# wire reach) and clear of the new drill box. drill_pole_4 moved from
+# (68,-40) (now ~8 tiles from the new drill center, too far for direct
+# supply) to (67,-35), 3 tiles from the new drill center (same offset
+# science-line-2-copper.spec.yaml's copper_drill_2_pole uses successfully)
+# and 3.6 tiles from an existing network-5 pole. Two tree-08 decorations
+# sit in the new footprint -- (73.1875,-30.1875) at the new relay spot and
+# (75.6875,-31.8125) on the new belt route near x=76 -- both destroyed
+# (pre-approved decorative-obstacle removal on this test map); nothing
+# else blocks the new box, the new belt row, or the drill_pole_4 spot.
+#
+# New port math: anchor (66,-33) -> out port anchor+(3,1) = (69,-32),
+# direction east. The existing vertical belt column at x=76.5 (built by
+# the ORIGINAL apply, spanning y=-36.5..-20.5 down into the furnace) already
+# covers this row -- only the new horizontal leg (x=69..75 at y=-32) needs
+# fresh belts; the turn into the existing column at (76,-32) is reused.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - furnace-row.function.yaml
+  - single-pole.function.yaml
+instances:
+  - id: iron_drill_4
+    resource: iron-ore
+    resource_mode: real_drills
+    position: { x: 66, y: -33 }
+    bounding_box: { left: 66, top: -33, right: 72, bottom: -27 }
+  # Furnace placed south-east of the drill's real out port (69,-32); an
+  # L-bend (east -> south) connects them, reusing the existing x=76.5
+  # belt column. Confirmed clear via RCON.
+  - id: iron_furnace_4
+    function: furnace_row
+    position: { x: 76, y: -22 }
+    params: { count: 1 }
+  - id: drill_pole_4
+    function: single_pole
+    position: { x: 67, y: -35 }
+  - id: relay_4a
+    function: single_pole
+    position: { x: 73, y: -31 }
+connections:
+  - { from: iron_drill_4.out, to: iron_furnace_4.in, kind: belt }
+# furnace_4.out lands at (76+6, -22+1) = (82,-21), direction south -- picked
+# up by science-line-4-iron-gear.spec.yaml's belt_run_south bridge, which
+# starts one tile south of here (physically adjacent, no cross-file
+# `connections:` possible per docs/FORMAT.md).

@@ -1,0 +1,15 @@
+# Line 1's iron->copper bridge, part 3 of 4: continues the x=115 climb
+# from y=-32 to y=-63 (touches bridge2_seg1.out @ (115,-31) by exact
+# position, cross-file).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment-north.function.yaml
+instances:
+  - id: bridge3_seg2
+    function: belt_segment_north
+    position: { x: 115, y: -32 }
+    params: { length: 32 }
+connections: []

@@ -1,0 +1,57 @@
+# Line 1 of 4: iron half. real_drills (iron-ore) -> furnace_row(1) ->
+# gear_assembler_wired, plus local solar power. Self-contained file (all
+# connections: link ports declared in this same file).
+#
+# Positioned in the FAR SOUTH of the shared iron-ore patch
+# (41,-39)-(72,-5): the coordinator's original hint area
+# (drill~49,-23 / furnace~53,-21 / gear~59,-19) turned out to already be
+# occupied by at least 2 other concurrently-building lines (confirmed live
+# via find_entities_filtered: a furnace @ 48.5,-22.5 and an
+# assembling-machine-3 @ 54.5,-20.5 sitting almost exactly on those
+# coordinates, plus a separate science am3 @ 65.5,-22.5 + infinity-chest @
+# 70.5,-22.5 a few tiles further east) — this server is shared with lines
+# 2-4 building in parallel, and the "empty map" the coordinator described
+# was already stale by the time this line started. Relocated to
+# {60,-13,67,-6}, confirmed live (find_entities_filtered over the drill
+# bbox, furnace zone, and gear zone) as ore-covered (49/49 tiles) and
+# entirely free of both decorations and other lines' entities.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - furnace-row.function.yaml
+  - gear-assembler-wired.function.yaml
+  - solar-row.function.yaml
+  - single-pole.function.yaml
+instances:
+  - id: iron_drill_1
+    resource: iron-ore
+    resource_mode: real_drills
+    position: { x: 60, y: -13 }
+    # right/bottom = left/top + 6, NOT +7: DRILL_COVERAGE (=7) steps with a
+    # `<=` loop bound, so a +7 span (i.e. "exactly one 7x7 cell" taken
+    # literally) actually fits the coverage step twice at each edge and
+    # places a 2x2 grid of 4 drills, not 1 — confirmed live via `plan`
+    # (first attempt produced drill[0..3] at 4 distinct corners). +6 gives
+    # the same 7-tile-wide span but only one valid anchor point.
+    bounding_box: { left: 60, top: -13, right: 66, bottom: -7 }
+  # Synthesized out port = anchor + (3,1) = (63,-12), direction east
+  # (drillPlacer's single-drill port math — see packages/compiler/src/drillPlacer.ts).
+  - id: iron_furnace_1
+    function: furnace_row
+    position: { x: 64, y: -11 }
+    params: { count: 1 }
+  - id: iron_gear_1
+    function: gear_assembler_wired
+    position: { x: 70, y: -9 }
+  - id: iron_drill_pole_1
+    function: single_pole
+    position: { x: 64, y: -13 }
+  - id: iron_solar_1
+    function: solar_row
+    position: { x: 64, y: -5 }
+    params: { count: 5 }
+connections:
+  - { from: iron_drill_1.out, to: iron_furnace_1.in, kind: belt }
+  - { from: iron_furnace_1.out, to: iron_gear_1.in, kind: belt }

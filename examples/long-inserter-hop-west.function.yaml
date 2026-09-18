@@ -1,0 +1,24 @@
+# A single long-handed-inserter (2-tile reach, vs 1 for a regular
+# inserter) for hopping directly over ONE obstructing tile a
+# straight/L-bend belt run can't occupy at all — no chest needed, since
+# the inserter picks straight off one belt and drops straight onto
+# another 2 tiles away, without ever touching the blocked tile in
+# between. Simpler and more reliable than the chest-crossing-west /
+# underground-crossing-west(-wide) approaches tried first for this exact
+# problem (an obstructing tile flanked closely enough that even a
+# chest+2-regular-inserters bridge would still need to occupy the blocked
+# tile itself) — see science-line-1-bridge-e.spec.yaml's header.
+# Not a self-contained function with its own belt entities: it directly
+# picks up from / drops onto whatever transport-belt entities already
+# exist 2 tiles either side (from other instances/files) — so it has no
+# `ports`, and callers place it by exact position rather than wiring it
+# through `connections:`.
+kind: function
+name: long_inserter_hop_west
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: long-handed-inserter
+    position: { x: 0, y: 0 }
+    direction: east
+ports: {}

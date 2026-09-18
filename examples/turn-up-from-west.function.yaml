@@ -1,0 +1,15 @@
+# 1x1 elbow: absorbs a west-arriving belt and re-emits it north. Mirror of
+# turn-up-from-east.function.yaml. See turn-down-from-west.function.yaml for
+# why this was needed (line 4's copper->science detour around its own
+# gear/science machine footprints).
+kind: function
+name: turn_up_from_west
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: north
+ports:
+  in: { side: east, offset: { x: 0, y: 0 }, direction: west, kind: belt, item: copper-plate }
+  out: { side: north, offset: { x: 0, y: 0 }, direction: north, kind: belt, item: copper-plate }

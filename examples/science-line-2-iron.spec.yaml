@@ -1,0 +1,75 @@
+# Line 2 of 4 - iron half + the science_assembler itself.
+#
+# Real electric-mining-drill (single 7x7 cell, DRILL_COVERAGE) -> real
+# electric-furnace (furnace_row count:1) -> gear_assembler_wired (no
+# built-in void sink, since its "out" now feeds a real consumer:
+# science_2.in_gear) -> science_assembler (already wires its OWN "out" to a
+# built-in infinity-chest void sink, at-most 0 — left untouched).
+#
+# Positions reused from the pre-crash iron-chain-2.spec.yaml probe (same
+# deterministic seed), re-verified live via find_entities_filtered
+# immediately before this apply: one huge-rock sat inside the drill's
+# 7x7 bbox at (50,-34) and was destroyed (pre-approved decorative-obstacle
+# removal); everything else in this file's footprint was already clear.
+#
+# gear_assembler_wired is the SAME 7x3 in/out port geometry as the stock
+# gear_assembler (only the void-sink entities at local x=7/8 were dropped),
+# so the gear position hinted in the old chain file (59,-35) needed no
+# adjustment at all.
+#
+# science_2 sits south of solar_2's footprint (y -31..-28) with a 2-row
+# gap, so its own 9x6 box (62,-26)-(70,-21) doesn't collide with the solar
+# panels. gear_2.out -> science_2.in_gear is a straight south run (both
+# ports share x=65) - confirmed no decorations in that 8-tile corridor.
+#
+# science_2.in_copper is fed from a different file
+# (science-line-2-bridge-c.spec.yaml) via cross-file belt adjacency, not a
+# `connections:` entry - connect.ts only resolves ports declared in the
+# SAME spec file, and the copper furnace is ~85 tiles north of here (see
+# science-line-2-copper.spec.yaml and the three bridge files for the
+# routing/entity-count-per-apply rationale).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - furnace-row.function.yaml
+  - gear-assembler-wired.function.yaml
+  - solar-row.function.yaml
+  - single-pole.function.yaml
+  - science-assembler.function.yaml
+instances:
+  - id: iron_drill_2
+    resource: iron-ore
+    resource_mode: real_drills
+    position: { x: 49, y: -39 }
+    bounding_box: { left: 49, top: -39, right: 55, bottom: -33 }
+  - id: iron_furnace_2
+    function: furnace_row
+    position: { x: 53, y: -37 }
+    params: { count: 1 }
+  - id: iron_gear_2
+    function: gear_assembler_wired
+    position: { x: 59, y: -35 }
+  # Relocated from the originally-hinted (50,-31): that footprint
+  # (x50-64,y-31..-28) sat directly on the column the long copper->science
+  # bridge needs (x=62), confirmed live via repeated "overlapping an
+  # existing entity" apply failures on science-line-2-bridge-c.spec.yaml.
+  # (32,-44) is clear open ground west of the drill/furnace cluster
+  # (decorations there destroyed live, pre-approved) and still within
+  # wire_reach (9) of drill_pole_2 - nearest solar pole (45,-41) to
+  # drill_pole_2 (48,-37) is dist ~5.
+  - id: solar_2
+    function: solar_row
+    position: { x: 32, y: -44 }
+    params: { count: 5 }
+  - id: drill_pole_2
+    function: single_pole
+    position: { x: 48, y: -37 }
+  - id: science_2
+    function: science_assembler
+    position: { x: 62, y: -26 }
+connections:
+  - { from: iron_drill_2.out, to: iron_furnace_2.in, kind: belt }
+  - { from: iron_furnace_2.out, to: iron_gear_2.in, kind: belt }
+  - { from: iron_gear_2.out, to: science_2.in_gear, kind: belt }

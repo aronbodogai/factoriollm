@@ -1,0 +1,20 @@
+# 1x1 "elbow" waypoint: absorbs a south-arriving belt run and re-emits it
+# east. Used to route a belt connection around obstacles that block a
+# single straight-or-single-L-bend run (this format's `connections:` only
+# supports one bend per entry — see docs/FORMAT.md and copper-chain-3's
+# notes for why this was needed). The entity is just one transport-belt
+# facing its OUTPUT direction; belts auto-curve from whatever neighbor
+# feeds them, so no special corner prototype is needed. The "in" port's
+# `direction` records the direction items are moving when they arrive
+# (the incoming leg's own direction), not the tile's own belt orientation.
+kind: function
+name: turn_right_from_south
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: east
+ports:
+  in: { side: north, offset: { x: 0, y: 0 }, direction: south, kind: belt, item: copper-ore }
+  out: { side: east, offset: { x: 0, y: 0 }, direction: east, kind: belt, item: copper-ore }

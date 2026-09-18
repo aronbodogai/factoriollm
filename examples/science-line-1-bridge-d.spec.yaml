@@ -1,0 +1,23 @@
+# Line 1's iron->copper bridge, part 4 of 6 (REVISED numbering — this used
+# to be the last file when the route went through x=53; now there are 2
+# more after it): final 32-tile leg of the x=115 climb, from y=-64 to
+# y=-95 (touches bridge3_seg2.out @ (115,-63) by exact position,
+# cross-file), then the turn that starts heading back west toward
+# science_1 (which sits at x53-61 — far west of this corridor).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment-north.function.yaml
+  - turn-left-from-north.function.yaml
+instances:
+  - id: bridge4_seg3
+    function: belt_segment_north
+    position: { x: 115, y: -64 }
+    params: { length: 32 }
+  - id: bridge4_tl
+    function: turn_left_from_north
+    position: { x: 115, y: -96 }
+connections:
+  - { from: bridge4_seg3.out, to: bridge4_tl.in, kind: belt }

@@ -1,0 +1,29 @@
+# Horizontal mirror of belt-segment.function.yaml (which only goes south) —
+# a straight run of `length` belt tiles moving west, in/out ports at each
+# end. Needed because iron_gear_1's `out` port (from gear-assembler-wired)
+# only ever exits south, so line 1's iron->science bridge has to turn onto
+# a horizontal leg before it can head north toward the copper patch — see
+# science-line-1-bridge-*.spec.yaml for the full route.
+kind: function
+name: belt_segment_west
+params:
+  length: { type: int, default: 4 }
+size: { width: "${length}", height: 1 }
+entities:
+  - repeat: "${length}"
+    name: transport-belt
+    position: { x: "${i}", y: 0 }
+    direction: west
+ports:
+  in:
+    side: east
+    offset: { x: "${length - 1}", y: 0 }
+    direction: west
+    kind: belt
+    item: iron-gear-wheel
+  out:
+    side: west
+    offset: { x: 0, y: 0 }
+    direction: west
+    kind: belt
+    item: iron-gear-wheel

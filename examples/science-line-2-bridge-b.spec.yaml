@@ -1,0 +1,15 @@
+# Line 2 of 4 - bridge chunk 2/3. Picks up at (62,-79), one tile south of
+# bridge-a's last tile (62,-80), same direction (south) - physical
+# adjacency join, no `connections:` needed (see bridge-a.spec.yaml).
+# Covers y=-79..-52 (28 tiles), continued by bridge-c.spec.yaml at y=-51.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment.function.yaml
+instances:
+  - id: bridge2_b
+    function: belt_segment
+    position: { x: 62, y: -79 }
+    params: { length: 28 }

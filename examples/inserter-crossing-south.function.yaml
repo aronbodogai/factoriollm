@@ -1,0 +1,45 @@
+# Alternative to underground-crossing-south.function.yaml for crossing a
+# single obstructing tile: this project's companion mod (mod/factoriollm.lua)
+# is a SHARED file living outside this worktree (symlinked in from the main
+# checkout at /home/ideku/fb/instance/mods/factoriollm -> the main repo's
+# mod/, not this worktree's) - editing it isn't something this session is
+# allowed to do (would land on the wrong branch / affect other concurrent
+# lines using the same running server). Its live `do_create` never passes a
+# `type` param through to `create_entity`, so every underground-belt this
+# format creates comes out "input" regardless of what the spec says -
+# confirmed live (both ends of the crossing this function replaces ended up
+# type=input, and LuaEntity.rotate() does NOT toggle belt_to_ground_type via
+# the scripting API, only via direct player interaction - also confirmed
+# live). So: no underground belts until that mod file can be patched by
+# whoever owns it.
+#
+# This achieves the same 1-tile skip using only entities the CURRENT,
+# unpatched mod already fully supports (name/position/direction) - a
+# long-handed-inserter's pickup/drop reach is 2 tiles each side, so one
+# placed 1 tile south of the blocked tile can pick up from a belt 2 tiles
+# north (skipping clean over the blocked tile in between) and drop 2 tiles
+# south.
+#
+# Layout (local coords): (0,0) = belt, the "in" port, receiving from
+# upstream. (0,1) = left empty - this is the blocked tile itself, never
+# touched. (0,2) = long-handed-inserter, direction north (pickup at (0,0),
+# drop at (0,4) - 2 tiles beyond this function's own 3-tall footprint, on
+# whatever belt the next instance places there). (1,2) = medium-electric-pole
+# for the inserter's own power (long-handed-inserters, unlike belts, need
+# electricity) - offset from column 0 so it doesn't need to sit on the
+# blocked row either.
+kind: function
+name: inserter_crossing_south
+params: {}
+size: { width: 2, height: 3 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: south
+  - name: long-handed-inserter
+    position: { x: 0, y: 2 }
+    direction: north
+  - name: medium-electric-pole
+    position: { x: 1, y: 2 }
+ports:
+  in: { side: north, offset: { x: 0, y: 0 }, direction: south, kind: belt, item: copper-plate }

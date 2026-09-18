@@ -1,0 +1,17 @@
+# Line 4 - copper->science long-haul bridge, part 3 of 4: straight south run
+# from (110,-49) down to (110,-9), staying east of everything (solar_4,
+# iron_gear_4, and the other lines' territory). See
+# science-line-4-copper-bridge-1.spec.yaml for the full routing rationale.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-run-south.function.yaml
+instances:
+  # in tile (110,-49) = directly south of copper_turn_4b.out (110,-50).
+  - id: copper_bridge_4_3
+    function: belt_run_south
+    position: { x: 110, y: -49 }
+    params: { length: 41 }
+# out tile = (110,-49+40) = (110,-9).

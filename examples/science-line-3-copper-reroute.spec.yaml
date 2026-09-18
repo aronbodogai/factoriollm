@@ -1,0 +1,84 @@
+# Line 3 copper collision fix: replaces the hand-built underground-belt
+# crossing at (77,-23)/(75,-23) (west, under a foreign north-south belt
+# column at x=76 that feeds a foreign electric-furnace/gear line) with a
+# long-handed-inserter hop, following the SAME proven pattern already used
+# in science-line-1-bridge-e.spec.yaml for an unrelated single-tile
+# obstruction.
+#
+# ROOT CAUSE (confirmed live via RCON find_entities_filtered +
+# get_transport_line item-name inspection, immediately before this file):
+# the underground-belt pair at (77,-23)/(75,-23) was NOT isolating from the
+# foreign perpendicular belt column it crosses at x=76 - items from that
+# foreign column (iron-gear-wheel, and earlier iron-plate) were leaking
+# into/merging onto line 3's own copper underground crossing itself
+# (confirmed: `get_transport_line` on the underground-belt entities
+# directly showed iron-gear-wheel mixed with copper-plate on the SAME lane
+# of the SAME entity, not a separate physical tile collision). This
+# contamination then rode the belt all the way downstream through the
+# hand-built south column (x=74), the east row rejoining turn_left_3.in
+# (80,-17)/(80,-16), through turn_left_3 and belt_west_3 itself (all
+# correctly built, own entities per science-line-3-bridge-6.state.json —
+# confirmed those are genuinely line 3's own transport-belt entities, just
+# carrying wrong items), all the way down to science_3.in_copper, whose
+# unfiltered inserter can't use non-copper-plate items - hence
+# item_ingredient_shortage on science_3 and full_output/
+# waiting_for_space_in_destination cascading back to copper_furnace_3/
+# copper_drill_3.
+#
+# This is exactly the known underground-belt-pairing-unreliable risk this
+# project has hit before (see science-line-3-bridge-5.spec.yaml's own
+# header - that hand-built crossing was PREVIOUSLY believed clean via
+# entity.neighbours, but the live item-content check here shows it is not).
+# Per the task's own prescribed fallback, replacing it with a
+# long-handed-inserter hop (a genuine physical gap - no belt tile ever
+# touches x=76) avoids the pairing/leak class of bug entirely.
+#
+# This file's state.json is pre-seeded (once, this session) with the 3
+# stale hand-built entities it replaces (the underground-belt pair itself,
+# plus the approach belt at (78,-23) which would otherwise dead-end once
+# (77,-23) stops being a belt) under synthetic localIds with no match in
+# this spec's own instances below - `apply`'s own diff/destroy+recreate
+# logic (docs/FORMAT.md's update policy) removes them as part of the same
+# apply that creates the new hop + replacement belt, so no raw RCON
+# destroy was needed for this step.
+#
+# Geometry (mirrors science-line-1-bridge-e.spec.yaml's worked example
+# exactly): obstruction (foreign belt) at x=76. Inserter placed at x=77
+# (obstruction+1, the old underground-input's own tile) with `direction:
+# east` (from the reused function) picking up 2 tiles east at x=79
+# (already line 3's own existing belt, from the hand-built west-turn
+# leading here - untouched) and dropping 2 tiles west at x=75 (the old
+# underground-output's tile, rebuilt below as a plain 1-tile belt), never
+# placing anything on x=76 or x=78 (x=78's old belt is one of the 3
+# destroyed stale entities - it would otherwise dead-end and jam once
+# x=77 stops being a belt).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - long-inserter-hop-west.function.yaml
+  - belt-strip-west.function.yaml
+  - single-pole.function.yaml
+instances:
+  - id: copper_hop_3
+    function: long_inserter_hop_west
+    position: { x: 77, y: -23 }
+  - id: copper_hop_dest_3
+    function: belt_strip_west
+    position: { x: 75, y: -23 }
+    params: { length: 1 }
+  # ADDED (this session, 2nd pass): the hop's long-handed-inserter reported
+  # status=54 (no_power) live via RCON - it was never within supply_radius
+  # of any existing pole (nearest, a foreign line's relay at (79.5,-18.5),
+  # is ~4.5 tiles away, outside medium-electric-pole's supply_radius). This
+  # pole sits within supply_radius of the inserter (~1.6 tiles) and within
+  # wire_reach (~3.5 tiles) of that foreign relay pole, so Factorio
+  # auto-wires it into the existing (already-live) network on placement.
+  - id: copper_hop_pole_3
+    function: single_pole
+    position: { x: 75, y: -22 }
+connections: []
+# copper_hop_dest_3.out lands at (75,-23), direction west - physically
+# adjacent to the existing hand-built south-turn at (74,-23) (untouched,
+# cross-file/hand-built adjacency, no connections: entry possible).

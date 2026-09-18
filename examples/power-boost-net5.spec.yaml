@@ -1,0 +1,36 @@
+# Power capacity top-up for the shared electric network "net5" (confirmed
+# live via each pole's `.electric_network_id`: gear1/gear2/gear3/gear4 and
+# science2/science3/science4 all sit on this one network — only line1's
+# science assembler is on a separate network "net9"). With all 4 lines
+# running simultaneously the combined demand was intermittently exceeding
+# net5's solar supply even with `daytime` frozen at 0 (full daylight,
+# confirmed NOT drifting this time) — multiple assemblers across different
+# lines were observed in `low_power` at the same moment, the classic
+# solar-undersized tell (no accumulators exist in this build, so this is a
+# real generation shortfall, not a transient). Adds 3 more solar_row(5)
+# blocks (15 more panels) stacked south of the existing `solar_4` block
+# (91,-20), spaced 6 tiles apart vertically (solar_row is 4 tall, panels at
+# local y=0, poles at local y=3) so each new block's own poles land well
+# within wire_reach (9) of the block above it and daisy-chain onto net5
+# automatically — confirmed clear of the x=111 north-south belt corridor
+# (another line's bridge) via a live area scan before placing.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - solar-row.function.yaml
+instances:
+  - id: power_boost_1
+    function: solar_row
+    position: { x: 91, y: -26 }
+    params: { count: 5 }
+  - id: power_boost_2
+    function: solar_row
+    position: { x: 91, y: -32 }
+    params: { count: 5 }
+  - id: power_boost_3
+    function: solar_row
+    position: { x: 91, y: -38 }
+    params: { count: 5 }
+connections: []

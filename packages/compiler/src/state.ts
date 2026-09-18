@@ -33,7 +33,8 @@ function compare(desired: IREntity, current: IREntity): Comparison {
     desired.name !== current.name ||
     desired.position.x !== current.position.x ||
     desired.position.y !== current.position.y ||
-    (desired.direction ?? 0) !== (current.direction ?? 0)
+    (desired.direction ?? 0) !== (current.direction ?? 0) ||
+    (desired.type ?? null) !== (current.type ?? null)
   ) {
     return "different";
   }

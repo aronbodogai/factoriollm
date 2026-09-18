@@ -1,0 +1,46 @@
+# Line 4 - copper->science long-haul bridge, part 1 of 4: straight south run
+# from copper_furnace_4.out (51,-94) down to (51,-51), staying at x=51.
+#
+# WHY THIS DETOUR EXISTS: a straight run south then east at any of the
+# "obvious" x/y values collided with another line's live infrastructure --
+# confirmed live via find_entities_filtered(force="player") before touching
+# any of this:
+#   - x=51 itself hits a foreign electric-mining-drill @ (50.5,-37.5) and a
+#     foreign solar-panel @ (51.5,-29.5) further south (another line's iron
+#     chain + solar farm sit almost exactly on this column around y=-30..-40).
+#   - jogging east at y in [-42,-9] runs straight into another line's
+#     north-south belt corridor at x=62, which was confirmed (via a full
+#     y-list scan of that column) to run CONTINUOUSLY from y=-108 to y=-52 --
+#     no gap anywhere in the range this line needed to cross.
+#   - a real gap in that x=62 corridor WAS found between y=-52 and y=-34
+#     (nothing there per the same scan) -- y=-50 is used as the east-jog row
+#     below (science-line-4-copper-bridge-2a/2b.spec.yaml) specifically
+#     because it sits in that gap, confirmed clear all the way from x=51 to
+#     x=111 via a direct area scan.
+#   - x=85 (this line's own science_4.in_copper column) can't be used for
+#     the whole vertical run either -- it runs straight through this line's
+#     OWN iron_gear_4 footprint (x=82..89, y=-16..-13). The route instead
+#     goes further east (x=110, clear of everything including this line's
+#     solar_4 at x=91..106) and only cuts back west at y=-8, south of
+#     iron_gear_4 entirely (science-line-4-copper-bridge-4/science.spec.yaml).
+#
+# Split into 4 files (bridge-1/2a/2b/3) plus the science file itself because
+# the full route is ~150 belt tiles -- far over the ~50-entity/apply
+# reliability ceiling. Each file's end tile is physically adjacent (same
+# tile grid, matching direction) to the next file's start tile -- Factorio
+# auto-links them, no `connections:` needed across files (connections: can
+# only resolve ports declared in the SAME spec file -- see docs/FORMAT.md
+# and the top-level FILE CONVENTION note).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-run-south.function.yaml
+instances:
+  # in tile (51,-93) = directly south of copper_furnace_4.out (51,-94).
+  - id: copper_bridge_4_1
+    function: belt_run_south
+    position: { x: 51, y: -93 }
+    params: { length: 43 }
+# out tile = (51,-93+42) = (51,-51).

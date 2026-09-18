@@ -1,0 +1,17 @@
+# Line 1's iron->copper bridge, part 2 of 4 (REVISED, x=115 corridor — see
+# science-line-1-bridge-a.spec.yaml's header for why): the first 32-tile
+# leg of the long north-bound climb at x=115, from just north of
+# bridge-a's bridge1_tu1.out @ (115,1) (touched by exact position,
+# cross-file) up to y=-31.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment-north.function.yaml
+instances:
+  - id: bridge2_seg1
+    function: belt_segment_north
+    position: { x: 115, y: 0 }
+    params: { length: 32 }
+connections: []

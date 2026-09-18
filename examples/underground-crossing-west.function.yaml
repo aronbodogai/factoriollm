@@ -1,0 +1,26 @@
+# West-facing mirror of underground-crossing-south.function.yaml — a
+# 1-tile underground-belt hop for crossing a single obstructing tile a
+# straight/L-bend run can't route around. Needed for line 1's final
+# westward approach into science_1.in_gear: another line's own north-south
+# bridge crosses at x=62 continuously from y=-33 down to below y=-101 (no
+# detour width available), confirmed live via can_place_entity sweeps.
+#
+# input at local (2,0) [east/receiving side, since material flows west],
+# output at local (0,0) [west/continuing side] - skips local (1,0) entirely
+# (max underground-belt gap is 4 tiles; 1 is plenty here).
+kind: function
+name: underground_crossing_west
+params: {}
+size: { width: 3, height: 1 }
+entities:
+  - name: underground-belt
+    position: { x: 2, y: 0 }
+    direction: west
+    type: input
+  - name: underground-belt
+    position: { x: 0, y: 0 }
+    direction: west
+    type: output
+ports:
+  in: { side: east, offset: { x: 2, y: 0 }, direction: west, kind: belt, item: iron-gear-wheel }
+  out: { side: west, offset: { x: 0, y: 0 }, direction: west, kind: belt, item: iron-gear-wheel }

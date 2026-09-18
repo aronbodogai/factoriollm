@@ -22,6 +22,22 @@ const DRILL_FOOTPRINT = 3;
 const DRILL_RADIUS = 2.49;
 const DRILL_COVERAGE = DRILL_FOOTPRINT + 2 * Math.floor(DRILL_RADIUS);
 
+// The synthesized `out` port previously claimed (bbox.right+1, bbox.top) —
+// the far east edge of the WHOLE bounding box — as if some belt ran along
+// the box's top row collecting from every drill in it. No such belt is
+// ever synthesized (placeDrills only emits drill entities), and for the
+// single-drill case (bbox sized to exactly one DRILL_COVERAGE cell, the
+// only configuration verified reliable — see DRILL_COVERAGE comment) that
+// port position could be many tiles from the drill's actual output. A
+// drill's real drop position is not exposed as a static prototype field
+// (`prototypes.entity["electric-mining-drill"]` has no drop-position
+// field we could find); this was measured live via RCON
+// (`entity.drop_position`) on a freshly-placed east-facing drill anchored
+// at a 7x7 cell's own (left,top): drop_position landed at local
+// (3.34765625, 1.5) relative to that anchor, i.e. footprint/2 (1.5) out
+// from center in the facing direction, plus this drop-distance constant.
+const DRILL_DROP_DISTANCE = 1.84765625;
+
 export interface SynthesizedInstance {
   entities: IREntity[]; // relative to `anchor`
   ports: Record<string, ResolvedPort>; // offsets relative to `anchor`
@@ -136,7 +152,15 @@ function placeDrills(instance: ResourceInstance): SynthesizedInstance {
         localId: `${instance.id}.drill[${count}]`,
         name: DRILL_NAME,
         position: centerPosition({ x: x - anchor.x, y: y - anchor.y }, DRILL_NAME),
-        direction: DIRECTION_TO_NUM.north,
+        // Must match the synthesized `out` port's direction (east, below) —
+        // a mining drill's actual drop position is on the side it faces,
+        // so a mismatched direction here means the drill never reaches the
+        // belt the connector router builds at the port. Confirmed live
+        // (chain1 rebuild): with direction=north the drill's real
+        // drop_position was on the opposite side entirely from the
+        // "east" port, so mined ore piled on bare ground and the drill
+        // reported waiting_for_space_in_destination forever.
+        direction: DIRECTION_TO_NUM.east,
       });
       count++;
     }
@@ -146,13 +170,48 @@ function placeDrills(instance: ResourceInstance): SynthesizedInstance {
     throw new CompileError(`${instance.id}: bounding_box too small to place any drills`);
   }
 
+  // Port offset targets the FIRST drill's actual drop position (see
+  // DRILL_DROP_DISTANCE above) — only correct for the single-drill,
+  // exactly-one-DRILL_COVERAGE-cell case. Bigger bboxes still only expose
+  // one "out" port for potentially many drills, an existing, documented
+  // limitation ("multi-drill collection isn't reliable yet").
+  //
+  // Ports elsewhere in this codebase are tile-index offsets (top-left of a
+  // 1x1 cell, e.g. furnace_row's `in: {offset: {x:0,y:1}}`), not continuous
+  // entity-center coordinates — and the real drop position isn't even
+  // exactly tile-centered (measured x fraction .34765625, not .5). floor()
+  // both axes to the tile that physically contains the drop point, so the
+  // connector router places its belt on the same integer tile grid as
+  // every other port and still catches the drill's actual output (any
+  // belt covering that tile's area receives an item dropped inside it,
+  // regardless of the drop point's exact sub-tile position).
   const port: ResolvedPort = {
     side: "east",
-    offset: { x: bbox.right - anchor.x + 1, y: 0 },
+    offset: {
+      x: Math.floor(DRILL_FOOTPRINT / 2 + DRILL_DROP_DISTANCE),
+      y: Math.floor(DRILL_FOOTPRINT / 2),
+    },
     direction: DIRECTION_TO_NUM.east,
     kind: "belt",
     item: instance.resource,
   };
+
+  // Unlike infinity_chest's synthesized stub (chest+inserter+belt+pole
+  // above), placeDrills previously emitted ONLY drill entities — nothing
+  // physically occupied the port tile. The connector router treats a
+  // port's own tile as already covered by the owning instance and starts
+  // its belt run one tile further out, so with no belt here the drill's
+  // mined item dropped onto bare ground and just sat there
+  // (waiting_for_space_in_destination forever — confirmed live). Add the
+  // catching belt ourselves, at the same tile the port offset above
+  // points at, for the first drill only (matches the port's single-drill
+  // scope).
+  entities.push({
+    localId: `${instance.id}.outbelt`,
+    name: "transport-belt",
+    position: centerPosition({ x: port.offset.x, y: port.offset.y }, "transport-belt"),
+    direction: DIRECTION_TO_NUM.east,
+  });
 
   return { entities, ports: { out: port }, anchor };
 }

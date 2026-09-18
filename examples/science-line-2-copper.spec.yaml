@@ -1,0 +1,107 @@
+# Line 2 of 4 - copper half (drill -> furnace) plus the start of the long
+# belt bridge up to science_2 (in examples/science-line-2-iron.spec.yaml).
+#
+# Positions reused from the pre-crash copper-chain-2.spec.yaml probe (same
+# deterministic seed) - re-verified live, still clear.
+#
+# copper_furnace_2.out (54,-111, facing south) needs to reach
+# science_2.in_copper at (62,-23) - 8 tiles east and ~88 tiles south of
+# here. `connections:` only auto-fills ONE straight-or-L-bend per entry, so
+# the route is built as a short local jog (south -> east -> south) using
+# the 1x1 turn_* elbow functions, ending at turnC's output tile (62,-108)
+# facing south. From there, three more spec files
+# (science-line-2-bridge-{a,b,c}.spec.yaml) continue the straight run south
+# in ~28-tile chunks - kept in separate files/applies because a single
+# apply covering the whole ~84-tile run (plus this file's own ~20 entities)
+# would land well past the ~50-57-entity point where this server's RCON
+# reply silently drops even though the entities are actually created (see
+# the FILE CONVENTION note in the task brief / README). Each bridge file's
+# first belt tile is placed at the exact absolute position one tile past
+# the previous segment's last tile, same direction - Factorio auto-links
+# adjacent same-direction belts with no symbolic `connections:` needed
+# across files (connect.ts only resolves ports declared in the SAME file
+# anyway).
+#
+# Live-verified immediately before this apply: three tree-08/dead-tree
+# decorations sat directly on the y=-108 jog row (x=57,58,60) and were
+# destroyed (pre-approved decorative-obstacle removal); nothing else in
+# this file's footprint was blocking.
+#
+# ROOT-CAUSE FIX (session: red-spm-infinity-chests): copper_drill_2's
+# original bounding_box {left:42,top:-119,right:48,bottom:-113} anchored a
+# single drill at (43.5,-117.5) whose mining_drill_radius (~2.49, see
+# drillPlacer.ts's DRILL_RADIUS) only ever reached the sliver of the real
+# copper-ore patch closest to that corner. That sliver mined out entirely
+# (confirmed live via RCON: the drill's own .status read
+# "no_minable_resources" while `scan-resources` still showed 47567 total
+# ore in the wider patch bbox=(38,-118)-(51,-111) — the bulk of it just
+# outside this drill's fixed radius, since drills don't move once placed).
+# Starved of copper ore -> copper_furnace_2 sat at "no_ingredients" ->
+# science_2's buffered copper-plate slowly drained with nothing
+# replenishing it, which is what actually manifested as
+# item_ingredient_shortage/full_output cycling downstream. This was NOT the
+# underground-belt/bridge-c bug (already worked around by the
+# inserter_crossing_south revision — confirmed live, no underground-belt
+# entities remain in this line's footprint).
+#
+# Fix: relocate copper_drill_2's single-drill bounding_box to
+# {left:44,top:-115,right:50,bottom:-109} (still exactly one
+# DRILL_COVERAGE=7 cell - the only placement configuration this codebase's
+# placeDrills() reliably supports), chosen by brute-force RCON scoring of
+# every candidate anchor's ore coverage within radius 2.49, RESTRICTED to
+# anchor.x <= 44 so the drill's east-facing out port (anchor.x+3) stays
+# strictly west of copper_furnace_2.in's x=48 - connect.ts's routeBeltOrPipe
+# only supports a straight run or a single L-bend, and a corner exactly
+# equal to the "from" port degenerates to a 0-length leg and is rejected
+# (UNROUTABLE_CONNECTION). This anchor captures ~12881 of the patch's total
+# ore (plenty for sustained production) while keeping the belt route
+# routable with the existing `connections:` entry unchanged.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - solar-row.function.yaml
+  - single-pole.function.yaml
+  - furnace-row.function.yaml
+  - turn-right-from-south.function.yaml
+  - turn-down-from-east.function.yaml
+instances:
+  - id: copper_drill_2
+    resource: copper-ore
+    resource_mode: real_drills
+    position: { x: 44, y: -115 }
+    bounding_box: { left: 44, top: -115, right: 50, bottom: -109 }
+  # Synthesized out port = anchor + (3,1) = (45,-118), direction east.
+  - id: copper_furnace_2
+    function: furnace_row
+    position: { x: 48, y: -112 }
+    params: { count: 1 }
+  - id: copper_drill_2_pole
+    function: single_pole
+    position: { x: 45, y: -117 }
+  - id: copper_relay_2b
+    function: single_pole
+    position: { x: 47, y: -112 }
+  - id: copper_relay_2a
+    function: single_pole
+    position: { x: 48, y: -108 }
+  - id: copper_solar_2
+    function: solar_row
+    position: { x: 42, y: -135 }
+    params: { count: 5 }
+  - id: copper_relay_2c
+    function: single_pole
+    position: { x: 46, y: -124 }
+  # Jog: furnace.out (south, x=54) -> turnA (turns to east) -> turnC
+  # (turns back to south, x=62, matching science_2.in_copper's column).
+  - id: bridge2_turnA
+    function: turn_right_from_south
+    position: { x: 54, y: -108 }
+  - id: bridge2_turnC
+    function: turn_down_from_east
+    position: { x: 62, y: -108 }
+connections:
+  - { from: copper_drill_2.out, to: copper_furnace_2.in, kind: belt }
+  - { from: copper_furnace_2.out, to: bridge2_turnA.in, kind: belt }
+  - { from: bridge2_turnA.out, to: bridge2_turnC.in, kind: belt }

@@ -1,0 +1,32 @@
+# A straight run of `length` transport-belts, all flowing south. Used to
+# bridge long distances between two FILES (see docs/FORMAT.md's note that
+# `connections:` only resolves ports declared in the same spec file, and the
+# top-level FILE CONVENTION note in this task about splitting large runs
+# across multiple ~50-entity-budget applies) — place one belt_run_south
+# instance per apply, with each successive instance's `position` computed
+# to be physically adjacent (one tile past the previous instance's `out`
+# tile) so Factorio's own belt auto-linking joins them with no symbolic
+# connection needed.
+kind: function
+name: belt_run_south
+params:
+  length: { type: int, default: 10 }
+size: { width: 1, height: "${length}" }
+entities:
+  - repeat: "${length}"
+    name: transport-belt
+    position: { x: 0, y: "${i}" }
+    direction: south
+ports:
+  in:
+    side: north
+    offset: { x: 0, y: 0 }
+    direction: south
+    kind: belt
+    item: copper-plate
+  out:
+    side: south
+    offset: { x: 0, y: "${length - 1}" }
+    direction: south
+    kind: belt
+    item: copper-plate

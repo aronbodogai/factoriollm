@@ -1,0 +1,30 @@
+# A 1-tile underground-belt hop, for crossing a single obstructing tile a
+# straight/L-bend run can't route around or through (e.g. another line's
+# belt built at the exact tile this line's corridor needs). Added this
+# task after hitting exactly that live: a foreign east-west belt "bus" ran
+# continuously across x=51..89+ at y=-50, blocking
+# science-line-2-bridge-c.spec.yaml's straight south run at x=62,y=-50 with
+# no way around it (the wall was far too wide to detour past). Needed
+# adding `type: input|output` support to the compiler/schema/mod for
+# underground-belt entities (packages/compiler/src/schema/function.ts,
+# ir.ts, resolveFunctions.ts, mod/factoriollm.lua) - nothing in this format
+# supported that before.
+#
+# input at local (0,0), output at local (0,2) - skips local (0,1) entirely
+# (max underground-belt gap is 4 tiles; 1 is plenty here).
+kind: function
+name: underground_crossing_south
+params: {}
+size: { width: 1, height: 3 }
+entities:
+  - name: underground-belt
+    position: { x: 0, y: 0 }
+    direction: south
+    type: input
+  - name: underground-belt
+    position: { x: 0, y: 2 }
+    direction: south
+    type: output
+ports:
+  in: { side: north, offset: { x: 0, y: 0 }, direction: south, kind: belt, item: copper-plate }
+  out: { side: south, offset: { x: 0, y: 2 }, direction: south, kind: belt, item: copper-plate }

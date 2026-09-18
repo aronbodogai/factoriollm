@@ -1,0 +1,23 @@
+# Wider version of underground-crossing-west.function.yaml: a 4-tile
+# underground-belt hop (the vanilla max gap) instead of 1. Needed for
+# science-line-1-bridge-e's patch: the single obstructing tile at x=80 was
+# flanked on both sides (x=79, x=81) by this line's OWN already-successfully-
+# placed regular belts, which occupy the tiles a 1-tile hop's input/output
+# would need — underground-belt entities can't share a tile with a
+# transport-belt any more than two transport-belts can. Hopping the full
+# 4 tiles (skipping x=79..82) lands the input/output on genuinely empty
+# ground on both sides instead.
+kind: function
+name: underground_crossing_west_wide
+params: {}
+size: { width: 5, height: 1 }
+entities:
+  - name: underground-belt
+    position: { x: 4, y: 0 }
+    direction: west
+  - name: underground-belt
+    position: { x: 0, y: 0 }
+    direction: west
+ports:
+  in: { side: east, offset: { x: 4, y: 0 }, direction: west, kind: belt, item: iron-gear-wheel }
+  out: { side: west, offset: { x: 0, y: 0 }, direction: west, kind: belt, item: iron-gear-wheel }

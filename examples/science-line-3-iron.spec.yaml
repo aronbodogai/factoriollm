@@ -1,0 +1,104 @@
+# Line 3 of 4 - iron half: real drill -> real furnace -> gear_assembler_wired
+# (own local solar power). See science-line-3-science.spec.yaml for the
+# gear -> science hookup (split into its own file/apply for entity-count
+# budget reasons, per the task's FILE CONVENTION note).
+#
+# DEVIATIONS from the task brief's hints, all confirmed live via RCON
+# find_entities_filtered immediately before writing this file:
+#  - iron_furnace_3 moved from the hinted (45,-29) to (45,-24): the hinted
+#    spot's east columns (x=50-51,y=-29..-28) overlap line 2's solar_2 row
+#    (solar_2 at (50,-31), panels spanning y=-31..-28) - confirmed live (1
+#    solar-panel found inside the hinted furnace footprint). Shifting south
+#    to y=-24 keeps the same drill->furnace L-bend geometry (furnace.in.x=45
+#    still > drill.out.x=44) while clearing line 2's territory entirely.
+#  - iron_gear_3 moved to (51,-22) (furnace position + (6,2), the same
+#    proven relative offset iron-chain-2.spec.yaml/science-line-2 use)
+#    instead of the hinted (51,-26), following furnace_3's own relocation.
+#  - solar_3 moved from the hinted (61,-27) (which sits inside line 2's
+#    gear_2/science_2 footprint, confirmed live: assembling-machine-3 x2 and
+#    5 solar panels already built there) to (24,-32), a confirmed-clear
+#    patch west of the drill (one big-rock there has since been cleared by
+#    concurrent activity - probe found it clear already). drill_pole_3 at
+#    (43,-33) plus relay_iron_3 at (46,-27) bridge the ~19-tile gap back to
+#    the furnace/gear grid (each hop <9 tiles, within wire_reach).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - furnace-row.function.yaml
+  - gear-assembler-wired.function.yaml
+  - solar-row.function.yaml
+  - single-pole.function.yaml
+instances:
+  # RELOCATED (this session): original box {41,-31,47,-25} mined out
+  # entirely (confirmed live: drill.status == no_minable_resources, 0 ore
+  # entities left inside that box via find_entities_filtered). Same patch,
+  # moved north to a fresh untouched cell: probed live via
+  # find_entities_filtered{type="resource",name="iron-ore",area=...} —
+  # {41,-38,47,-31} scores 21 live ore tiles, occ-check (all non-resource
+  # entities in that exact area) shows only this line's OWN drill_pole_3 at
+  # (43,-33) and old outbelt/pole remnants, all outside the drill's actual
+  # 3x3 footprint (anchor+1.5..anchor+4.5) and outbelt tile (anchor+(3,1)).
+  # Kept left=41 (patch's own west edge, x<41 is 0 ore) and top<=-25 so the
+  # out port (anchor+(3,1), fixed direction east per drillPlacer.ts) stays
+  # north of iron_furnace_3.in (45,-23) — required for the router's
+  # east-then-south L-bend corner (A.y < B.y forces the drill north of the
+  # furnace; see science-line-2-copper.spec.yaml's analogous x<=44 note for
+  # the same constraint on the other axis).
+  - id: iron_drill_3
+    resource: iron-ore
+    resource_mode: real_drills
+    position: { x: 41, y: -26 }
+    # NOTE (this session, 2nd relocation): the previous box here
+    # ({41,-38,47,-32}, anchoring the drill at (42.5,-36.5)) worked when
+    # first applied (confirmed live: status=working, mining_target set) but
+    # was re-exhausted within the same session -- confirmed live it shares
+    # its ore patch with ANOTHER line's drill at (50.5,-37.5) (not ours,
+    # found live via find_entities_filtered over a wide area), which was
+    # simultaneously mining the same patch and burned through the small
+    # (12-tile/1944-amount) cell far faster than a single drill would have.
+    # Rather than fight over that patch again, relocated south instead, to
+    # a patch confirmed clear of any other line's drill:
+    # `scan-resources --left 41 --top -26 --right 44 --bottom -21
+    # --resource iron-ore`: patch-1 bbox=(41,-26)-(43,-22) tiles=14
+    # amount=2637. Occupancy-checked live (find_entities_filtered over the
+    # exact box) clear except this line's OWN relay_iron_3b pole at
+    # (41,-27), one row north of this box's own top edge (top: -26), so no
+    # overlap.
+    #
+    # This box sits SOUTH of iron_furnace_3.in (45,-23) instead of north
+    # (the original convention noted below, kept for one-time-drill
+    # north-of-furnace bends) -- untested combination, but the connector
+    # router in this project routes on absolute port positions, not a
+    # hardcoded north/south assumption, and this was verified live: `plan`
+    # then `apply` both succeeded with a valid corner route (see this
+    # session's apply output).
+    bounding_box: { left: 41, top: -26, right: 44, bottom: -21 }
+  - id: iron_furnace_3
+    function: furnace_row
+    position: { x: 45, y: -24 }
+    params: { count: 1 }
+  - id: iron_gear_3
+    function: gear_assembler_wired
+    position: { x: 51, y: -22 }
+  - id: solar_3
+    function: solar_row
+    position: { x: 24, y: -32 }
+    params: { count: 5 }
+  - id: drill_pole_3
+    function: single_pole
+    position: { x: 43, y: -33 }
+  - id: relay_iron_3
+    function: single_pole
+    position: { x: 46, y: -27 }
+  # Bridges solar_3's rightmost pole (37.5,-28.5) to relay_iron_3 (46.5,-26.5):
+  # that direct gap measured 9.2 tiles live (dx=9,dy=2), just over
+  # wire_reach(9) - all downstream inserters/assembler reported no_power on
+  # the first apply. This extra hop keeps every leg <9.
+  - id: relay_iron_3b
+    function: single_pole
+    position: { x: 41, y: -27 }
+connections:
+  - { from: iron_drill_3.out, to: iron_furnace_3.in, kind: belt }
+  - { from: iron_furnace_3.out, to: iron_gear_3.in, kind: belt }

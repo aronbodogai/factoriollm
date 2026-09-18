@@ -1,0 +1,16 @@
+# 1x1 elbow: absorbs a north-arriving belt and re-emits it west. Mirror of
+# turn-right-from-north.function.yaml. Used mid-route on line 1's bridge to
+# sidestep another line's already-built drill/pole sitting squarely on the
+# straight-line corridor between line 1's iron and copper clusters (this
+# server is shared with 3 other concurrently-building lines).
+kind: function
+name: turn_left_from_north
+params: {}
+size: { width: 1, height: 1 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 0 }
+    direction: west
+ports:
+  in: { side: south, offset: { x: 0, y: 0 }, direction: north, kind: belt, item: iron-gear-wheel }
+  out: { side: west, offset: { x: 0, y: 0 }, direction: west, kind: belt, item: iron-gear-wheel }

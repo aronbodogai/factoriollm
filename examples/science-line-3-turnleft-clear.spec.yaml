@@ -1,0 +1,14 @@
+# Minimal destroy+recreate of just turn_left_3 (1 tile) to clear its stale
+# contents - same rationale as science-line-3-bridge-6-clear.spec.yaml, at
+# a smaller scope.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - turn-left-from-south.function.yaml
+instances:
+  - id: turn_left_3
+    function: turn_left_from_south
+    position: { x: 80, y: -16 }
+connections: []

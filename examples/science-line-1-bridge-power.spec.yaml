@@ -1,0 +1,32 @@
+# Power for line 1's two bridge hop inserters (long-handed-inserter, needs
+# electricity like any inserter). Both reported status "no_power" (54):
+# nothing was ever built to reach them out on the bridge itself, far from
+# both the iron and copper/science solar clusters. A short relay chain
+# (poles ~6 tiles apart, well inside wire_reach 9) connects
+# bridge6_hop (63,-96) to science_1's own nearest pole (61,-88, ~8.2 tiles
+# away — within reach directly) and on to bridge5_hop (81,-96).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - single-pole.function.yaml
+instances:
+  # Closes the gap to science_1's own pole @ (61,-88): direct distance from
+  # bridge_power_1 was ~9.2, just past wire_reach (9).
+  - id: bridge_power_0
+    function: single_pole
+    position: { x: 64, y: -92 }
+  - id: bridge_power_1
+    function: single_pole
+    position: { x: 63, y: -97 }
+  - id: bridge_power_2
+    function: single_pole
+    position: { x: 69, y: -97 }
+  - id: bridge_power_3
+    function: single_pole
+    position: { x: 75, y: -97 }
+  - id: bridge_power_4
+    function: single_pole
+    position: { x: 81, y: -97 }
+connections: []

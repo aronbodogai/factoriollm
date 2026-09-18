@@ -1,0 +1,32 @@
+# Line 2 of 4 - bridge chunk 4/4 (final leg). Picks up at (45,-32), one
+# tile south of bridge-c's last tile (45,-33), same direction - physical
+# adjacency join (see bridge-a.spec.yaml / bridge-c.spec.yaml notes). Turns
+# back east (clear of iron_gear_2's x59-65 footprint and this line's own
+# gear->science connector belt at x=65 - both confirmed live to only block
+# y>=-35, and this row is -32, one south of iron_gear_2's bottom edge and
+# still north of solar_2's relocated footprint... solar_2 itself was moved
+# off this whole column, so no conflict there either), then continues south
+# to hand off to science_2.in_copper (62,-23) - last tile (62,-24) sits
+# directly north of that port, same direction.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - belt-segment.function.yaml
+  - turn-right-from-south.function.yaml
+  - turn-down-from-east.function.yaml
+instances:
+  - id: bridge2_d_turn1
+    function: turn_right_from_south
+    position: { x: 45, y: -32 }
+  - id: bridge2_d_turn2
+    function: turn_down_from_east
+    position: { x: 62, y: -32 }
+  - id: bridge2_d2
+    function: belt_segment
+    position: { x: 62, y: -31 }
+    params: { length: 8 } # covers y=-31..-24
+connections:
+  - { from: bridge2_d_turn1.out, to: bridge2_d_turn2.in, kind: belt }
+  - { from: bridge2_d_turn2.out, to: bridge2_d2.in, kind: belt }

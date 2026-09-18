@@ -1,0 +1,58 @@
+# Same as gear-assembler.function.yaml but WITHOUT the built-in void-sink
+# inserter+infinity-chest at the "out" port tile. Use this variant whenever
+# `out` will be connected to a REAL downstream consumer (e.g. a
+# science_assembler's in_gear) via connections: in the same spec — if the
+# stock gear-assembler.function.yaml's void sink is kept, its inserter sits
+# directly on the "out" port's own belt tile and competes with any
+# downstream connection for the same item, reproducing the exact
+# "whichever consumer sits first drains 100%" fan-out bug documented in
+# packages/compiler/src/drillPlacer.ts (~line 87-94). Only use the stock
+# gear-assembler.function.yaml for a standalone/test chain with no real
+# downstream consumer.
+kind: function
+name: gear_assembler_wired
+params: {}
+size: { width: 7, height: 3 }
+entities:
+  - name: transport-belt
+    position: { x: 0, y: 1 }
+    direction: south
+  - name: inserter
+    position: { x: 1, y: 1 }
+    direction: west
+  - name: assembling-machine-3
+    position: { x: 2, y: 0 }
+    direction: north
+    recipe: iron-gear-wheel
+  - name: inserter
+    position: { x: 5, y: 1 }
+    direction: west
+  - name: transport-belt
+    position: { x: 6, y: 1 }
+    direction: south
+  - name: medium-electric-pole
+    position: { x: 0, y: 2 }
+  # x=5, not 6 — x=6 is the "out" port's own column, and a pole there sits
+  # directly on the belt tile immediately south of the out port (the very
+  # first tile any straight-south downstream connection needs), silently
+  # jamming that connection at the source. Confirmed live (this task):
+  # `apply` failed with "cannot place transport-belt at (65.5,-32.5) —
+  # ...overlapping an existing entity" for exactly that tile when wiring
+  # iron_gear_2.out -> science_2.in_gear straight south. x=5 still covers
+  # the east inserter (local (5,1), supply_radius 3.5, distance 1) and
+  # stays within wire_reach (9) of the west pole at (0,2).
+  - name: medium-electric-pole
+    position: { x: 5, y: 2 }
+ports:
+  in:
+    side: north
+    offset: { x: 0, y: 1 }
+    direction: south
+    kind: belt
+    item: iron-plate
+  out:
+    side: south
+    offset: { x: 6, y: 1 }
+    direction: south
+    kind: belt
+    item: iron-gear-wheel

@@ -1,0 +1,27 @@
+# Mirror of belt-segment.function.yaml but for a westward-flowing run:
+# `length` belt tiles moving west, in/out ports at each end. Needed for
+# science-line-3's copper bridge jog (see turn-left-from-south.function.yaml
+# for why a westward leg is needed here at all).
+kind: function
+name: belt_strip_west
+params:
+  length: { type: int, default: 4 }
+size: { width: "${length}", height: 1 }
+entities:
+  - repeat: "${length}"
+    name: transport-belt
+    position: { x: "${i}", y: 0 }
+    direction: west
+ports:
+  in:
+    side: east
+    offset: { x: "${length - 1}", y: 0 }
+    direction: west
+    kind: belt
+    item: copper-plate
+  out:
+    side: west
+    offset: { x: 0, y: 0 }
+    direction: west
+    kind: belt
+    item: copper-plate

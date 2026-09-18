@@ -1,0 +1,25 @@
+# Line 4 - copper->science long-haul bridge, part 2a of 4: turn south->east
+# at (51,-50) (the confirmed gap in the other line's x=62 belt corridor),
+# then east run to x=80. See science-line-4-copper-bridge-1.spec.yaml for
+# the full routing rationale.
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - turn-right-from-south.function.yaml
+  - belt-run-east.function.yaml
+instances:
+  # in tile (51,-50) = directly south of copper_bridge_4_1.out (51,-51).
+  - id: copper_turn_4a
+    function: turn_right_from_south
+    position: { x: 51, y: -50 }
+  # in tile (52,-50) = directly east of copper_turn_4a's out (same tile,
+  # since it's a 1x1 elbow: in and out share the physical tile).
+  - id: copper_bridge_4_2a
+    function: belt_run_east
+    position: { x: 52, y: -50 }
+    params: { length: 29 }
+connections:
+  - { from: copper_turn_4a.out, to: copper_bridge_4_2a.in, kind: belt }
+# out tile = (52+28,-50) = (80,-50).

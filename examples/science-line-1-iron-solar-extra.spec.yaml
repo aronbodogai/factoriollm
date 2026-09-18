@@ -1,0 +1,31 @@
+# Extra solar capacity for line 1's iron cluster. One solar_row(5) (5
+# panels, 300kW peak) proved insufficient for drill+furnace+gear+4
+# inserters (~530kW peak combined electric-mining-drill/electric-furnace/
+# assembling-machine-3/inserter draw): confirmed live, all three big
+# consumers showed status "low_power" (14) minutes after apply, at
+# daytime~0.496 (near-peak sun, so this wasn't a night-time transient).
+# Adding 2 more solar_row(5) south of the first (stacked, wired in purely
+# by supply_radius/wire_reach proximity — solar_row's own poles are within
+# range of each other row's poles at this spacing, no relay poles needed).
+kind: spec
+server:
+  rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIOLLM_RCON_PASSWORD }
+  script_output_dir: /home/ideku/fb/instance/script-output
+imports:
+  - solar-row.function.yaml
+  - single-pole.function.yaml
+instances:
+  - id: iron_solar_2
+    function: solar_row
+    position: { x: 64, y: 5 }
+    params: { count: 5 }
+  - id: iron_solar_3
+    function: solar_row
+    position: { x: 64, y: 10 }
+    params: { count: 5 }
+  # solar_1's poles are at abs y=-2, solar_2's at abs y=8 — 10 tiles apart,
+  # just past wire_reach (9). solar_2 (y=8) to solar_3 (y=13) is only 5
+  # apart, no relay needed there.
+  - id: iron_solar_relay_1
+    function: single_pole
+    position: { x: 66, y: 3 }

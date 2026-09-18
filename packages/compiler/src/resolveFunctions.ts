@@ -71,6 +71,7 @@ export function resolveFunction(
         direction: DIRECTION_TO_NUM[template.direction],
         recipe,
         infinityFilter: template.infinityFilter,
+        type: template.type,
       });
     }
   });
