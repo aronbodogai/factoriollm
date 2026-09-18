@@ -65,7 +65,7 @@ side; this WSL2 instance has no outbound network).
 
 ```
 packages/compiler/   parse -> layout -> ir -> state (diff) -> planBuilder
-packages/cli/        the `factoriollm` binary: ping / validate / plan / apply / destroy / surfaces
+packages/cli/        the `factoriollm` binary: ping / validate / plan / apply / destroy / surfaces / speed
 mod/                 companion Lua mod: applies a plan via the Factorio API
 scripts/dev.sh        wraps factorio-broadcast's dev.sh for server lifecycle
 docs/FORMAT.md        the target YAML format and compiler pipeline
@@ -111,6 +111,44 @@ patches, so inputs come from infinity chests (the same pattern
 Full isolation of research and logistics would need a separate *force* as
 well, which Blueprint Sandboxes does — not done here yet, because it first
 needs checking whether factorio-broadcast's sidecar reports non-player forces.
+
+## Game speed
+
+Waiting for a build to prove itself is mostly waiting for game time to pass:
+a furnace has to heat up, inserters have to swing, the first craft has to
+finish, and the stats window `--smoke-check` reads is measured in game
+seconds. `game.speed` is a multiplier on how much of that happens per real
+second (1 = the normal 60 updates per second), and the companion mod exposes
+it so an agent can fast-forward on demand instead of sitting through the
+warm-up at 1x.
+
+```bash
+node packages/cli/dist/index.js speed --password devpass          # show
+node packages/cli/dist/index.js speed 10 --password devpass       # 10x
+node packages/cli/dist/index.js speed reset --password devpass    # back to 1
+```
+
+The useful form is `--smoke-speed` on `apply --smoke-check`: it raises the
+speed just for the production wait and puts back whatever it found
+afterwards, on success, failure or a thrown error alike:
+
+```bash
+node packages/cli/dist/index.js apply my.spec.yaml --password devpass --auto-approve \
+  --smoke-check --smoke-item iron-plate --smoke-speed 10
+```
+
+Two things worth knowing:
+
+- Production rates stay per game-minute, so `producing at 60/min` reads the
+  same at any speed. Only the wall clock changes: `--smoke-timeout` is real
+  milliseconds, and at 10x the same timeout covers ten times as much game
+  time.
+- `game.speed` is server-global. There is no per-surface speed, so this
+  fast-forwards every surface and every connected player at once. That is
+  why it is an explicit flag and a visible `speed` command rather than
+  something `apply` does silently. The mod refuses anything outside
+  0.01–64; the server just runs as fast as its CPU allows anyway, so a
+  huge number buys nothing over a large one.
 
 ## How a plan reaches the server
 

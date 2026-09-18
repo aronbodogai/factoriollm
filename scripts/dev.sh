@@ -47,10 +47,13 @@ case "$cmd" in
   ping)
     (cd "$REPO_ROOT/packages/cli" && npx tsx src/index.ts ping "$@")
     ;;
+  speed)
+    (cd "$REPO_ROOT/packages/cli" && npx tsx src/index.ts speed "$@")
+    ;;
   "")
     cat >&2 <<EOF
 usage: dev.sh <command> [args]
-  factoriollm commands:            ping
+  factoriollm commands:            ping, speed [<N>|reset]
   forwarded to factorio-broadcast: $SIBLING_COMMANDS
 EOF
     exit 64

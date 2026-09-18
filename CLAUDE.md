@@ -23,3 +23,11 @@ Constraints worth remembering:
 - Electric networks never cross surfaces, so every surface needs its own power; a void surface has no ore, so inputs come from infinity chests.
 - Research/logistics isolation would need a separate *force* as well (Blueprint Sandboxes does this). Not implemented — it first needs checking whether factorio-broadcast's sidecar reports non-player forces.
 - `M.setup` in `mod/factoriollm.lua` runs at load scope where `game` does not exist. Never touch `game` there; use the event handlers registered in `mod/control.lua`.
+
+## Game speed
+
+`game.speed` is a server-global simulation multiplier (1 = 60 UPS); the mod exposes it as `get_speed`/`set_speed` and refuses values outside 0.01–64.
+
+- `factoriollm speed [<N>|reset]` shows or sets it. Prefer `apply --smoke-check --smoke-speed N`, which raises it only for the production wait and restores the previous value in a `finally`.
+- Rates stay per game-minute at any speed; only wall-clock time shrinks. `--smoke-timeout` is real milliseconds.
+- There is no per-surface speed: fast-forwarding affects every surface and every connected player, so never set it implicitly.

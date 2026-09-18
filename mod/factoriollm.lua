@@ -27,6 +27,15 @@ local function is_managed_surface(name)
   return type(name) == "string" and name:sub(1, #SURFACE_PREFIX) == SURFACE_PREFIX
 end
 
+-- game.speed bounds for set_speed. 0.01 is the engine's own documented
+-- minimum; the ceiling is ours. game.speed is a request, not a guarantee —
+-- the server runs as many ticks per second as the CPU allows and simply
+-- stops keeping up beyond that — so a huge value buys nothing over a large
+-- one, it just guarantees the tick loop pegs a core. 64x is well past what
+-- a headless dev server sustains on a near-empty map.
+local MIN_SPEED = 0.01
+local MAX_SPEED = 64
+
 -- Lab-tile void surface, modelled on Blueprint Sandboxes' Lab.Create /
 -- Lab.AfterCreate (MIT, cameronleger/blueprint-sandboxes). The point is a
 -- blank deterministic canvas: no ore, no water, no cliffs, no trees, so
@@ -454,7 +463,35 @@ function M.setup(_config)
       return {
         version = VERSION,
         tick = game.tick,
+        speed = game.speed,
       }
+    end,
+
+    -- Reads the global simulation speed (1 = normal, 60 UPS).
+    get_speed = function()
+      return { speed = game.speed, tick = game.tick }
+    end,
+
+    -- Sets game.speed so a build can be fast-forwarded through the seconds
+    -- of game time a production check needs, then set back. Returns the
+    -- previous value so the caller can restore exactly what it found rather
+    -- than assuming 1.
+    --
+    -- game.speed is server-global: there is no per-surface speed, so this
+    -- accelerates every surface and every connected player at once. That is
+    -- the reason it is a separate, explicit call and not something apply
+    -- does on its own.
+    set_speed = function(opts)
+      local speed = opts and opts.speed
+      if type(speed) ~= "number" or speed ~= speed or speed < MIN_SPEED or speed > MAX_SPEED then
+        return { ok = false, error = string.format(
+          "speed must be a number between %s and %s, got %s",
+          tostring(MIN_SPEED), tostring(MAX_SPEED), tostring(speed)
+        ) }
+      end
+      local previous = game.speed
+      game.speed = speed
+      return { ok = true, previous = previous, speed = game.speed, tick = game.tick }
     end,
 
     -- `plan` arrives as an already-decoded Lua table: there is no
