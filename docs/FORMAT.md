@@ -52,6 +52,7 @@ kind: spec
 server:
   rcon: { host: 127.0.0.1, port: 27015, password_env: FACTORIO_RCON_PASSWORD }
   script_output_dir: /home/aron/fb/instance/script-output
+  surface: fllm-smelting   # optional, defaults to nauvis
 imports:
   - examples/smelting-column.function.yaml
 instances:
@@ -66,6 +67,13 @@ instances:
 connections:
   - { from: smelt1.out, to: smelt2.in, kind: belt }
 ```
+
+`server.surface` names the deploy target. A name starting with `fllm-` is
+factoriollm-managed: the mod creates it on demand as an empty lab-tile
+surface, and `destroy --delete-surface` may delete it wholesale. Because
+production statistics are per-surface, one surface per spec is what makes
+`apply --smoke-check` able to attribute output to this spec alone. Any other
+name is used as-is and never created or deleted. See README.md.
 
 A resource-backed instance has no hand-authored function — a synthesized
 one is produced either by the drill placer or, for testing, an

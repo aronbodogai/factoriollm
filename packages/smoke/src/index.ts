@@ -37,7 +37,9 @@ export interface SmokeCheckResult {
  * given stats window) goes above 0, or `timeoutMs` elapses. Only meaningful
  * on a save where nothing else is already producing that item — on a busy
  * base, this can't distinguish your instance's contribution from everyone
- * else's.
+ * else's. Deploying to a dedicated `fllm-*` surface is the fix: production
+ * statistics are per-surface, so nothing else can contaminate the reading.
+ * See README.md, "Managed surfaces".
  */
 export async function waitForProduction(
   sidecarUrl: string,

@@ -23,26 +23,52 @@ const MAX_PAYLOAD_CHARS = 50_000;
  * `factoriollm.apply` ever sees it, so the mod receives an actual Lua table,
  * not a string it has to parse itself.
  */
-export async function triggerApply(payload: unknown, rconOpts: RconOptions): Promise<OpResult[]> {
+async function callRemote<T>(fnName: string, payload: unknown, rconOpts: RconOptions): Promise<T> {
   const payloadJson = JSON.stringify(payload);
   if (payloadJson.length > MAX_PAYLOAD_CHARS) {
     throw new Error(
-      `plan payload too large for a single RCON command (${payloadJson.length} chars, limit ${MAX_PAYLOAD_CHARS}) — chunked delivery isn't implemented yet`,
+      `payload too large for a single RCON command (${payloadJson.length} chars, limit ${MAX_PAYLOAD_CHARS}) — chunked delivery isn't implemented yet`,
     );
   }
 
   const luaLiteral = JSON.stringify(payloadJson);
   const lua =
     `/silent-command rcon.print(helpers.table_to_json(remote.call(` +
-    `"factoriollm","apply",helpers.json_to_table(${luaLiteral}))))`;
+    `"factoriollm","${fnName}",helpers.json_to_table(${luaLiteral}))))`;
 
   const reply = await rconCommand(lua, rconOpts);
   if (!reply.trim()) {
-    throw new Error("empty RCON reply from apply — is the factoriollm mod loaded on the server?");
+    throw new Error(`empty RCON reply from ${fnName} — is the factoriollm mod loaded on the server?`);
   }
   try {
-    return JSON.parse(reply) as OpResult[];
+    return JSON.parse(reply) as T;
   } catch {
     throw new Error(`unexpected RCON reply (not JSON): ${reply}`);
   }
+}
+
+export async function triggerApply(payload: unknown, rconOpts: RconOptions): Promise<OpResult[]> {
+  return callRemote<OpResult[]>("apply", payload, rconOpts);
+}
+
+export interface ManagedSurface {
+  name: string;
+  entityCount: number;
+}
+
+export async function listSurfaces(rconOpts: RconOptions): Promise<ManagedSurface[]> {
+  // helpers.table_to_json turns an empty Lua table into {} rather than [],
+  // so "no managed surfaces" arrives as an object, not an array.
+  const reply = await callRemote<ManagedSurface[] | Record<string, never>>("list_surfaces", {}, rconOpts);
+  return Array.isArray(reply) ? reply : [];
+}
+
+export interface DeleteSurfaceResult {
+  ok: boolean;
+  deleted?: boolean;
+  error?: string;
+}
+
+export async function deleteSurface(surface: string, rconOpts: RconOptions): Promise<DeleteSurfaceResult> {
+  return callRemote<DeleteSurfaceResult>("delete_surface", { surface }, rconOpts);
 }
